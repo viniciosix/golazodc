@@ -30,7 +30,9 @@ const object = (value: unknown): JsonObject | undefined =>
 
 const integer = (value: unknown): number | undefined => {
   const parsed = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(parsed) && Number.isInteger(parsed) ? parsed : undefined;
+  return Number.isFinite(parsed) && Number.isInteger(parsed)
+    ? parsed
+    : undefined;
 };
 
 function entryStats(entry: JsonObject) {
