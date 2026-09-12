@@ -1,4 +1,6 @@
+import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
 import {
+  EmbedBuilder,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -115,18 +117,27 @@ export default {
       !('send' in channel) ||
       !interaction.appPermissions?.has([
         PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.ReadMessageHistory,
         channel.isThread()
           ? PermissionFlagsBits.SendMessagesInThreads
           : PermissionFlagsBits.SendMessages,
       ])
     )
       throw new UserError(
-        'Preciso de permissão para visualizar e enviar mensagens neste canal.',
+        'Preciso de Ver canal, Enviar mensagens, Inserir links e Ler histórico neste canal.',
       );
     if (action === 'teste') {
       await channel.send({
-        content:
-          '🧪 TESTE SIMULADO • Tricord\n⚽ Exemplo de alerta: São Paulo 1 × 0 Adversário.\nEste placar é fictício. Nenhum gol real foi detectado.',
+        embeds: [
+          new EmbedBuilder()
+            .setColor(TRICORD_RED)
+            .setTitle('🧪 TESTE SIMULADO')
+            .setDescription(
+              '⚽ Exemplo de alerta: São Paulo 1 × 0 Adversário.\nEste placar é fictício. Nenhum gol real foi detectado.',
+            )
+            .setFooter({ text: TRICORD_NAME }),
+        ],
         allowedMentions: { parse: [] },
       });
       await interaction.editReply(
@@ -157,7 +168,7 @@ export default {
       matches,
     );
     await interaction.editReply(
-      `Alertas ligados para ${team.displayName} em ${leagues[league]}, neste canal. Só novos gols do time serão anunciados; correções de placar também serão informadas. Use /gols desligar para parar.`,
+      `Alertas ligados para ${team.displayName} em ${leagues[league]}, neste canal. A narração será atualizada em uma única mensagem. Só novos gols do time serão anunciados separadamente; correções de placar também serão informadas. Use /gols desligar para parar.`,
     );
   },
 } satisfies Command;

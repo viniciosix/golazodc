@@ -111,6 +111,7 @@ export async function observeMatch(
       data: {
         subscriptionId: sub.id,
         revision: sub.revision,
+        eventId: match.id,
         content: `${title}\n${match.home.name} ${match.home.score} × ${match.away.score} ${match.away.name}\n${match.clock} • Fonte: ESPN\nhttps://www.espn.com.br/futebol/placar/_/jogoId/${match.id}`,
       },
     });

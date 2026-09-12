@@ -77,6 +77,7 @@ model GoalSubscription {
  updatedAt DateTime @updatedAt
  snapshots GoalSnapshot[]
  notices GoalNotice[]
+ narration MatchNarration?
 }
 model GoalSnapshot {
  id String @id @default(cuid())
@@ -91,6 +92,7 @@ model GoalSnapshot {
  @@unique([subscriptionId, eventId])
 }
 model GoalNotice {
+ eventId String?
  id String @id @default(cuid())
  subscriptionId String
  subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
@@ -100,4 +102,18 @@ model GoalNotice {
  sentAt DateTime?
  attempts Int @default(0)
  @@index([sentAt, createdAt])
+}
+
+model MatchNarration {
+ id String @id @default(cuid())
+ subscriptionId String @unique
+ subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+ eventId String
+ revision String
+ messageId String?
+ generation Int @default(0)
+ rotate Boolean @default(false)
+ sinceSequence Int @default(-1)
+ payloadHash String @default("")
+ updatedAt DateTime @updatedAt
 }

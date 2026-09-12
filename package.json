@@ -12,7 +12,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run tests/database.integration.test.ts tests/goals.integration.test.ts",
+    "test:integration": "vitest run tests/database.integration.test.ts tests/goals.integration.test.ts tests/narration.integration.test.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",

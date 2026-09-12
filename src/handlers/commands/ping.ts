@@ -3,7 +3,7 @@ import type { Command } from '../../core/types.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('ping')
-    .setDescription('Verifica a conexão do Golazo'),
+    .setDescription('Verifica a conexão do TRICORD'),
   async execute(interaction, { client }) {
     await interaction.reply(
       `Pong! WebSocket: ${client.ws.ping < 0 ? 'calculando' : `${client.ws.ping} ms`}`,

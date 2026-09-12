@@ -5,6 +5,6 @@ export default {
   name: Events.ClientReady,
   once: true,
   async execute({ client }) {
-    logger.info({ botId: client.user?.id }, 'Golazo online');
+    logger.info({ botId: client.user?.id }, 'TRICORD online');
   },
 } satisfies Event<typeof Events.ClientReady>;

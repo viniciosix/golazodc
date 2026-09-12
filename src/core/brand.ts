@@ -1,4 +1,4 @@
-export const TRICORD_NAME = 'Tricord';
+export const TRICORD_NAME = 'TRICORD';
 export const TRICORD_RED = 0xe31b23;
 
 export const FOOTBALL_RESULT_EMOJIS = {

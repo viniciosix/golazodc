@@ -77,19 +77,48 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Alertas persistidos', () => {
       db,
       client: {
         channels: {
-          fetch: vi.fn().mockResolvedValue({ isTextBased: () => true, send }),
+          fetch: vi
+            .fn()
+            .mockResolvedValue({
+              isTextBased: () => true,
+              send,
+              messages: {
+                edit: vi.fn(),
+                fetch: vi.fn().mockResolvedValue({ delete: vi.fn() }),
+              },
+            }),
         },
       },
     } as unknown as Context;
-    await pollGoals(context, async () => [goal]);
-    await pollGoals(context, async () => [goal]);
-    expect(send).toHaveBeenCalledTimes(1);
+    await pollGoals(
+      context,
+      async () => [goal],
+      async () => [],
+    );
+    await pollGoals(
+      context,
+      async () => [goal],
+      async () => [],
+    );
+    expect(
+      send.mock.calls.filter(([p]) =>
+        p.embeds?.[0]?.toJSON().description?.startsWith('⚽ GOL'),
+      ),
+    ).toHaveLength(1);
     await observeMatch(db, sub, { ...goal, home: { ...goal.home, score: 2 } });
     await db.goalSubscription.update({
       where: { id: sub.id },
       data: { enabled: false },
     });
-    await pollGoals(context, async () => []);
-    expect(send).toHaveBeenCalledTimes(1);
+    await pollGoals(
+      context,
+      async () => [],
+      async () => [],
+    );
+    expect(
+      send.mock.calls.filter(([p]) =>
+        p.embeds?.[0]?.toJSON().description?.startsWith('⚽ GOL'),
+      ),
+    ).toHaveLength(1);
   });
 });

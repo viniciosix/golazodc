@@ -1,4 +1,4 @@
-# Golazo
+# TRICORD
 
 Bot de Discord para coleção de cartas de futebol. TypeScript, Node.js 24, discord.js 14, PostgreSQL, Prisma 6 e Sharp. GitHub é a fonte do código; o ambiente de desenvolvimento recomendado é GitHub Codespaces.
 
@@ -16,7 +16,7 @@ npm run dev
 
 O banco no devcontainer usa o host `postgres`, configurado pelo Docker Compose. A variável de ambiente tem prioridade sobre o `.env`. Não é necessário editar a URL para usar o Codespace.
 
-O bot só está conectado depois da mensagem **Golazo online**. Experimente `/ping`, `/perfil` e `/colecao`. No perfil, clique em **Editar bio** para testar button e modal. Na coleção, use o seletor de raridade; os botões de paginação são habilitados quando houver mais de dez cartas. O autocomplete da opção `jogador` pesquisa jogadores que você possui.
+O bot só está conectado depois da mensagem **TRICORD online**. Experimente `/ping`, `/perfil` e `/colecao`. No perfil, clique em **Editar bio** para testar button e modal. Na coleção, use o seletor de raridade; os botões de paginação são habilitados quando houver mais de dez cartas. O autocomplete da opção `jogador` pesquisa jogadores que você possui.
 
 A coleção inicial é vazia. Não existe comando público que gere cartas ou moedas. `npm run db:seed` adiciona somente um jogador fictício e uma carta ao catálogo. Para testar inventário manualmente, use `npm run db:studio` e crie registros UserCard relacionando o usuário e a carta de demonstração. Não use o seed como catálogo de jogadores reais.
 
@@ -34,7 +34,7 @@ Tokens que foram compartilhados devem ser redefinidos antes de usar. Nunca coloq
 npm run commands:register -- --global
 ```
 
-Use uma aplicação exclusiva do Golazo: o registro substitui a lista de comandos daquele aplicativo no escopo selecionado. Comandos de servidor e globais são escopos independentes. O registro não acontece automaticamente no startup. Para conferir os payloads sem autenticação: `npm run commands:check`.
+Use uma aplicação exclusiva do TRICORD: o registro substitui a lista de comandos daquele aplicativo no escopo selecionado. Comandos de servidor e globais são escopos independentes. O registro não acontece automaticamente no startup. Para conferir os payloads sem autenticação: `npm run commands:check`.
 
 ## Fora do Codespaces
 
@@ -111,7 +111,7 @@ O build mantém a estrutura de pastas e carrega `.js` em produção. `npm run de
 npm run card:preview
 ```
 
-Cria `output/card-preview.png` (600 × 840) em roxo galático. `renderCard()` aceita metadados e buffers opcionais de retrato e overlay. Faz resize, composição e rasterização com Sharp; texto variável é escapado antes de entrar no SVG. Há limite de pixels de entrada. URLs externas não são baixadas pelo renderizador. Valide origem, tamanho e direitos de uso de futuros assets em uma camada separada.
+Cria `output/card-preview.png` (600 × 840) em vermelho. `renderCard()` aceita metadados e buffers opcionais de retrato e overlay. Faz resize, composição e rasterização com Sharp; texto variável é escapado antes de entrar no SVG. Há limite de pixels de entrada. URLs externas não são baixadas pelo renderizador. Valide origem, tamanho e direitos de uso de futuros assets em uma camada separada.
 
 ## Testes
 
@@ -172,3 +172,21 @@ Configuração, snapshots e fila de alertas sobrevivem a reinícios. Entrega ten
 A tabela usa regex em table/tbody/tr/td, relaciona as duas tabelas HTML por data-idx e valida ordem das colunas, 20 clubes e consistência numérica. Cada `/brasileirao` consulta a fonte, reaproveitando cache de até 60 s. Se a fonte falhar, pode mostrar cópia de até uma hora **marcada como antiga**, com horário da consulta; sem cópia válida, informa indisponibilidade. Não é possível garantir que o site de origem atualize imediatamente. `npm run football:check` testa as fontes reais sem enviar mensagens ao Discord; não integra a CI para evitar depender da disponibilidade externa.
 
 Fontes: https://www.espn.com.br/futebol/classificacao/_/liga/bra.1 e placares públicos em site.api.espn.com. Não há scraping com login ou contorno de bloqueios.
+
+## Narração do TRICORD
+
+A narração acompanha automaticamente o time/competição habilitado com `/gols ligar`. Não é necessário um comando novo. `/gols desligar` também pausa a narração, na próxima consulta.
+
+Durante uma partida em andamento, uma única embed vermelha mostra placar, relógio e os cinco lances mais recentes da ESPN em português. O bot edita a mensagem apenas quando muda o conteúdo. Ele não inventa lances quando a fonte está indisponível. A tabela do GE e seu layout permanecem independentes da narração.
+
+Quando um alerta de gol do time acompanhado (ou correção de placar) é entregue, o bot envia a embed vermelha do alerta, apaga a narração anterior e cria uma nova mensagem abaixo para os próximos lances. O alerta de gol permanece no canal. Gols do adversário continuam apenas atualizando o placar/narração, seguindo a configuração original dos alertas. Ao encerrar a partida, a narração fica marcada como encerrada.
+
+O ID da mensagem e a rotação pendente ficam no PostgreSQL. Reiniciar o processo não cria uma mensagem por consulta. Uma mensagem removida manualmente é recriada; falhas de permissão não geram novas mensagens em série. O bot precisa de Ver canal, Enviar mensagens, Inserir links e Ler histórico de mensagens. Não precisa de Gerenciar mensagens para apagar mensagens próprias. O monitor continua limitado a uma réplica e ao intervalo GOAL_POLL_SECONDS.
+
+Para aplicar esta atualização, pare o processo e execute:
+
+```bash
+git pull && npm run build && npm run db:deploy && npm run commands:register && npm run dev
+```
+
+A nova migração adiciona MatchNarration e o ID da partida aos alertas, sem apagar dados existentes. Os testes de narração usam PostgreSQL real com transporte Discord simulado e verificam edição, ordem envio/apagamento/recriação, deduplicação e recuperação de mensagem apagada.

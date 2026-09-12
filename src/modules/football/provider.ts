@@ -55,7 +55,7 @@ export async function fetchText(
   const response = await fetch(url, {
     signal: AbortSignal.timeout(timeout),
     headers: {
-      'User-Agent': 'Golazo/0.1 football scoreboard',
+      'User-Agent': 'TRICORD/0.1 football scoreboard',
       Accept: 'text/html,application/json',
       ...headers,
     },
