@@ -129,7 +129,9 @@ async function currentSeasonId(base: string) {
   if (seasonCache && seasonCache.expiresAt > Date.now()) return seasonCache.id;
 
   const data = object(
-    JSON.parse(await fetchText(`${base}/unique-tournament/${tournamentId}/seasons`)),
+    JSON.parse(
+      await fetchText(`${base}/unique-tournament/${tournamentId}/seasons`),
+    ),
   );
   if (!data || !Array.isArray(data.seasons))
     throw new Error('Temporadas do Sofascore indisponíveis');
