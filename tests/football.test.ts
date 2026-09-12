@@ -14,32 +14,27 @@ const match: Match = {
 
 function standingsPayload() {
   return {
-    children: [
+    standings: [
       {
-        name: 'Classificação',
-        standings: {
-          entries: Array.from({ length: 20 }, (_, i) => ({
-            team: { displayName: `Time ${i}` },
-            stats: [
-              { name: 'gamesPlayed', value: 10 },
-              { name: 'wins', value: 5 },
-              { name: 'ties', value: 3 },
-              { name: 'losses', value: 2 },
-              { name: 'goalsFor', value: 12 },
-              { name: 'goalsAgainst', value: 7 },
-              { name: 'goalDifference', value: 5 },
-              { name: 'points', value: 18 },
-              { name: 'rank', value: i + 1 },
-            ],
-          })),
-        },
+        type: 'total',
+        rows: Array.from({ length: 20 }, (_, i) => ({
+          team: { name: `Time ${i}` },
+          position: i + 1,
+          matches: 10,
+          wins: 5,
+          draws: 3,
+          losses: 2,
+          scoresFor: 12,
+          scoresAgainst: 7,
+          points: 18,
+        })),
       },
     ],
   };
 }
 
 describe('Futebol', () => {
-  it('extrai classificação da API JSON da ESPN', () => {
+  it('extrai classificação da API JSON do Sofascore', () => {
     const table = parseStandings(JSON.stringify(standingsPayload()));
     expect(table).toHaveLength(20);
     expect(table[0]).toMatchObject({
@@ -55,22 +50,19 @@ describe('Futebol', () => {
     expect(() => parseStandings('{}')).toThrow();
 
     const incomplete = standingsPayload();
-    incomplete.children[0]!.standings.entries.pop();
+    incomplete.standings[0]!.rows.pop();
     expect(() => parseStandings(incomplete)).toThrow();
 
     const duplicate = standingsPayload();
-    duplicate.children[0]!.standings.entries[19]!.team.displayName = 'Time 0';
+    duplicate.standings[0]!.rows[19]!.team.name = 'Time 0';
     expect(() => parseStandings(duplicate)).toThrow();
   });
 
-  it('aceita differential como fallback para saldo de gols', () => {
+  it('calcula saldo de gols a partir dos placares', () => {
     const payload = standingsPayload();
-    const stats = payload.children[0]!.standings.entries[0]!.stats;
-    const goalDifference = stats.find(
-      (item) => item.name === 'goalDifference',
-    )!;
-    goalDifference.name = 'differential';
-    expect(parseStandings(payload)[0]!.difference).toBe(5);
+    payload.standings[0]!.rows[0]!.scoresFor = 20;
+    payload.standings[0]!.rows[0]!.scoresAgainst = 9;
+    expect(parseStandings(payload)[0]!.difference).toBe(11);
   });
 
   it('separa gol, gol adversário, repetição e correção', () => {
