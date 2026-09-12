@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseStandings } from '../src/modules/football/standings.js';
+import {
+  parseCbfStandings,
+  parseGeStandings,
+} from '../src/modules/football/standings.js';
 import { goalChange, scoreFor } from '../src/modules/football/goals.js';
 import { parseMatches, type Match } from '../src/modules/football/provider.js';
 
@@ -12,30 +15,40 @@ const match: Match = {
   away: { id: '1', name: 'Outro', score: 0 },
 };
 
-function standingsPayload() {
-  return {
-    standings: [
-      {
-        type: 'total',
-        rows: Array.from({ length: 20 }, (_, i) => ({
-          team: { name: `Time ${i}` },
-          position: i + 1,
-          matches: 10,
-          wins: 5,
-          draws: 3,
-          losses: 2,
-          scoresFor: 12,
-          scoresAgainst: 7,
-          points: 18,
-        })),
-      },
-    ],
+function cbfHtml(count = 20) {
+  const rows = Array.from(
+    { length: count },
+    (_, index) => `
+      <tr>
+        <td><strong>${index + 1}</strong><span>0</span><a href="/time/${index}">Time ${index}</a></td>
+        <td>18</td><td>10</td><td>5</td><td>3</td><td>2</td>
+        <td>12</td><td>7</td><td>5</td><td>10</td><td>1</td><td>60</td>
+      </tr>`,
+  ).join('');
+  return `<html><body><table><tbody>${rows}</tbody></table></body></html>`;
+}
+
+function geHtml(count = 20) {
+  const payload = {
+    classificacao: Array.from({ length: count }, (_, index) => ({
+      ordem: index + 1,
+      nome_popular: `Time ${index}`,
+      pontos: 18,
+      jogos: 10,
+      vitorias: 5,
+      empates: 3,
+      derrotas: 2,
+      gols_pro: 12,
+      gols_contra: 7,
+      saldo_gols: 5,
+    })),
   };
+  return `<script type="text/javascript" id="scriptReact">const classificacao = ${JSON.stringify(payload)};</script>`;
 }
 
 describe('Futebol', () => {
-  it('extrai classificação da API JSON do Sofascore', () => {
-    const table = parseStandings(JSON.stringify(standingsPayload()));
+  it('extrai classificação da CBF', () => {
+    const table = parseCbfStandings(cbfHtml());
     expect(table).toHaveLength(20);
     expect(table[0]).toMatchObject({
       position: 1,
@@ -46,23 +59,24 @@ describe('Futebol', () => {
     });
   });
 
-  it('rejeita classificação alterada, incompleta ou duplicada', () => {
-    expect(() => parseStandings('{}')).toThrow();
-
-    const incomplete = standingsPayload();
-    incomplete.standings[0]!.rows.pop();
-    expect(() => parseStandings(incomplete)).toThrow();
-
-    const duplicate = standingsPayload();
-    duplicate.standings[0]!.rows[19]!.team.name = 'Time 0';
-    expect(() => parseStandings(duplicate)).toThrow();
+  it('extrai classificação do GE', () => {
+    const table = parseGeStandings(geHtml());
+    expect(table).toHaveLength(20);
+    expect(table[19]).toMatchObject({
+      position: 20,
+      team: 'Time 19',
+      points: 18,
+    });
   });
 
-  it('calcula saldo de gols a partir dos placares', () => {
-    const payload = standingsPayload();
-    payload.standings[0]!.rows[0]!.scoresFor = 20;
-    payload.standings[0]!.rows[0]!.scoresAgainst = 9;
-    expect(parseStandings(payload)[0]!.difference).toBe(11);
+  it('rejeita classificação incompleta ou duplicada', () => {
+    expect(() => parseCbfStandings(cbfHtml(19))).toThrow();
+    expect(() => parseGeStandings(geHtml(19))).toThrow();
+    expect(() => parseCbfStandings(cbfHtml().replace('Time 19', 'Time 0'))).toThrow();
+  });
+
+  it('rejeita estatísticas inconsistentes', () => {
+    expect(() => parseCbfStandings(cbfHtml().replace('<td>12</td><td>7</td><td>5</td>', '<td>12</td><td>7</td><td>6</td>'))).toThrow();
   });
 
   it('separa gol, gol adversário, repetição e correção', () => {
