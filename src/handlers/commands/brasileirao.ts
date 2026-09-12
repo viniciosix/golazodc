@@ -17,6 +17,28 @@ const normalizeTeam = (name: string) =>
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase();
 
+const isSaoPaulo = (name: string) => normalizeTeam(name).includes('sao paulo');
+
+const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
+
+const formatTableRow = (row: {
+  position: number;
+  team: string;
+  points: number;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  difference: number;
+}) => {
+  const marker = isSaoPaulo(row.team) ? '▶' : ' ';
+  const team = (isSaoPaulo(row.team) ? row.team.toUpperCase() : row.team)
+    .slice(0, 18)
+    .padEnd(18);
+
+  return `${marker}${String(row.position).padStart(2)} ${team} ${String(row.points).padStart(3)} ${String(row.played).padStart(2)} ${String(row.wins).padStart(2)} ${String(row.draws).padStart(2)} ${String(row.losses).padStart(2)} ${signed(row.difference).padStart(4)}`;
+};
+
 export default {
   data: new SlashCommandBuilder()
     .setName('brasileirao')
@@ -32,26 +54,31 @@ export default {
       );
     }
 
-    const lines = table.rows.map((r) => {
-      const saoPaulo = normalizeTeam(r.team) === 'sao paulo';
-      const teamName = saoPaulo
-        ? `🔴 __**${r.team.toUpperCase()}**__`
-        : `**${r.team}**`;
-      const goalDifference =
-        r.difference > 0 ? `+${r.difference}` : r.difference;
+    const saoPaulo = table.rows.find((row) => isSaoPaulo(row.team));
+    const saoPauloSummary = saoPaulo
+      ? `🔴⚪⚫ **SÃO PAULO**\n**${saoPaulo.position}º • ${saoPaulo.points} pontos**\n${saoPaulo.played} jogos • ${saoPaulo.wins}V • ${saoPaulo.draws}E • ${saoPaulo.losses}D • SG ${signed(saoPaulo.difference)}`
+      : '';
 
-      return `${r.position}. ${teamName} — **${r.points} pts** | J ${r.played} | ${FOOTBALL_RESULT_EMOJIS.win} ${r.wins} ${FOOTBALL_RESULT_EMOJIS.draw} ${r.draws} ${FOOTBALL_RESULT_EMOJIS.loss} ${r.losses} | SG ${goalDifference}`;
-    });
+    const legend = `${FOOTBALL_RESULT_EMOJIS.win} Vitória  •  ${FOOTBALL_RESULT_EMOJIS.draw} Empate  •  ${FOOTBALL_RESULT_EMOJIS.loss} Derrota`;
+    const header = ' #  CLUBE              PTS  J  V  E  D   SG';
+    const rows = table.rows.map(formatTableRow).join('\n');
+    const description = [
+      legend,
+      saoPauloSummary,
+      `\`\`\`text\n${header}\n${rows}\n\`\`\``,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
 
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(TRICORD_RED)
-          .setTitle('🏆 Brasileirão • Série A')
+          .setTitle('BRASILEIRÃO • SÉRIE A')
           .setURL(standingsUrl)
-          .setDescription(lines.join('\n'))
+          .setDescription(description)
           .setFooter({
-            text: `${TRICORD_NAME} • ${table.source} • ${table.stale ? 'Última cópia válida' : 'Atualização com cache de até 60 segundos'}`,
+            text: `${TRICORD_NAME} • Fonte: ${table.source} • ${table.stale ? 'Última cópia válida' : 'Atualizado agora'}`,
           })
           .setTimestamp(table.fetchedAt),
       ],
