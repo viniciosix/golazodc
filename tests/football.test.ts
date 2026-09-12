@@ -72,11 +72,20 @@ describe('Futebol', () => {
   it('rejeita classificação incompleta ou duplicada', () => {
     expect(() => parseCbfStandings(cbfHtml(19))).toThrow();
     expect(() => parseGeStandings(geHtml(19))).toThrow();
-    expect(() => parseCbfStandings(cbfHtml().replace('Time 19', 'Time 0'))).toThrow();
+    expect(() =>
+      parseCbfStandings(cbfHtml().replace('Time 19', 'Time 0')),
+    ).toThrow();
   });
 
   it('rejeita estatísticas inconsistentes', () => {
-    expect(() => parseCbfStandings(cbfHtml().replace('<td>12</td><td>7</td><td>5</td>', '<td>12</td><td>7</td><td>6</td>'))).toThrow();
+    expect(() =>
+      parseCbfStandings(
+        cbfHtml().replace(
+          '<td>12</td><td>7</td><td>5</td>',
+          '<td>12</td><td>7</td><td>6</td>',
+        ),
+      ),
+    ).toThrow();
   });
 
   it('separa gol, gol adversário, repetição e correção', () => {
