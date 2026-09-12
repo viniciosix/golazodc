@@ -37,7 +37,8 @@ export default {
       const teamName = saoPaulo
         ? `🔴 __**${r.team.toUpperCase()}**__`
         : `**${r.team}**`;
-      const goalDifference = r.difference > 0 ? `+${r.difference}` : r.difference;
+      const goalDifference =
+        r.difference > 0 ? `+${r.difference}` : r.difference;
 
       return `${r.position}. ${teamName} — **${r.points} pts** | J ${r.played} | ${FOOTBALL_RESULT_EMOJIS.win} ${r.wins} ${FOOTBALL_RESULT_EMOJIS.draw} ${r.draws} ${FOOTBALL_RESULT_EMOJIS.loss} ${r.losses} | SG ${goalDifference}`;
     });
