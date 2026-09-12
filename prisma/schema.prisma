@@ -64,3 +64,40 @@ model UserCard {
  @@index([userId, acquiredAt, id])
  @@index([cardId])
 }
+
+model GoalSubscription {
+ id String @id @default(cuid())
+ guildId String
+ channelId String @unique
+ league String
+ teamId String
+ teamName String
+ enabled Boolean @default(true)
+ revision String
+ updatedAt DateTime @updatedAt
+ snapshots GoalSnapshot[]
+ notices GoalNotice[]
+}
+model GoalSnapshot {
+ id String @id @default(cuid())
+ subscriptionId String
+ subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+ eventId String
+ revision String
+ ownScore Int
+ otherScore Int
+ sequence Int @default(0)
+ observedAt DateTime @default(now())
+ @@unique([subscriptionId, eventId])
+}
+model GoalNotice {
+ id String @id @default(cuid())
+ subscriptionId String
+ subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+ revision String
+ content String
+ createdAt DateTime @default(now())
+ sentAt DateTime?
+ attempts Int @default(0)
+ @@index([sentAt, createdAt])
+}

@@ -52,7 +52,10 @@ describe('Infraestrutura', () => {
   it('carrega todos os tipos de handler e rejeita duplicatas', async () => {
     const handlers = await loadHandlers();
     expect([...handlers.commands.keys()].sort()).toEqual([
+      'brasileirao',
       'colecao',
+      'gols',
+      'jogos',
       'perfil',
       'ping',
     ]);

@@ -10,6 +10,8 @@ import { loadHandlers } from './core/loader.js';
 import { route } from './core/router.js';
 import { createDatabase } from './infrastructure/database.js';
 import { createCache, type Cache } from './infrastructure/cache.js';
+import { startGoalWorker } from './modules/football/worker.js';
+let stopGoalWorker: (() => Promise<void>) | undefined;
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
   allowedMentions: { parse: [] },
@@ -21,6 +23,7 @@ async function shutdown(code: number) {
   if (stopping) return;
   stopping = true;
   const deadline = setTimeout(() => process.exit(1), 10000).unref();
+  await stopGoalWorker?.();
   client.destroy();
   await Promise.allSettled([db.$disconnect(), cache?.close()]);
   clearTimeout(deadline);
@@ -60,6 +63,9 @@ try {
     { commands: handlers.commands.size },
     'Handlers carregados; conectando ao Discord',
   );
+  client.once(Events.ClientReady, () => {
+    stopGoalWorker = startGoalWorker(context, config.GOAL_POLL_SECONDS);
+  });
   await client.login(config.DISCORD_TOKEN);
 } catch (err) {
   logger.fatal(

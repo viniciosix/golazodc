@@ -148,3 +148,27 @@ Não é preciso domínio público, porta HTTP ou webhook para este bot: ele usa 
 O banco separa Player (identidade), Card (edição/raridade/temporada) e UserCard (cópia individual com proprietário, origem e bloqueio). User possui saldo inteiro em BigInt, com restrição de não negatividade no PostgreSQL. O rating também possui restrição no banco. Relações impedem remoção de cartas/jogadores que ainda possuem referências.
 
 Veja [docs/architecture.md](docs/architecture.md) para as próximas etapas de packs, mercado, trocas, moedas e eventos. Esses sistemas não estão implementados nesta base.
+
+## Alertas de gol e Brasileirão
+
+Aplique a nova migração (`npm run db:deploy`), registre os comandos novamente (`npm run commands:register`) e reinicie o processo. Se já usa um Codespace, execute `git pull` antes; não é preciso recriar o ambiente.
+
+- `/gols ligar`: acompanha São Paulo no Brasileirão neste canal por padrão.
+- `/gols ligar competicao:… time:…`: escolha outro time via autocomplete para testar um jogo real. Selecionar competição antes do time atualiza o catálogo.
+- `/gols desligar`: desativa neste canal e impede a entrega de alertas pendentes ainda não enviados. Uma mensagem já em envio pode chegar.
+- `/gols status`: mostra configuração persistida no PostgreSQL.
+- `/gols teste`: envia um exemplo **explicitamente simulado**, sem modificar o acompanhamento real.
+- `/jogos`: lista jogos em andamento; se não houver, lista ontem/hoje/amanhã em UTC. Há seleção de competição.
+- `/brasileirao`: classificação da Série A obtida da página da ESPN usando regex.
+
+Para trocar de volta ao São Paulo, use `/gols ligar` sem opções. Cada canal possui uma configuração time/competição; canais diferentes podem acompanhar times diferentes. Para São Paulo em outra competição, selecione a competição correspondente. Não há detecção automática de todas as competições do clube. Gerenciar servidor é obrigatório para `/gols`, e o bot precisa visualizar/enviar mensagens no canal. Não usa @everyone, cargos ou menções automáticas.
+
+`GOAL_POLL_SECONDS=60` define o intervalo entre ciclos (30–300 s), além do tempo de consulta. Há atraso da fonte e polling; não é transmissão instantânea. Consulta placares públicos da ESPN (interface não contratual, sujeita a indisponibilidade ou mudanças). Não depende de token esportivo, Redis ou automações do ChatGPT. O processo do bot precisa estar ligado.
+
+Ao ligar, o placar atual vira baseline; gols anteriores não são anunciados. Só aumentos do placar do time escolhido disparam gol. Reduções de qualquer lado geram correção de placar/possível anulação. Pênaltis de desempate e autoria do gol não são acompanhados. Se a fonte saltar dois gols entre consultas, uma atualização informa o placar novo. Uma pausa superior a cinco minutos reestabelece o baseline, evitando gols antigos. Jogos novos sem snapshot começam no placar observado.
+
+Configuração, snapshots e fila de alertas sobrevivem a reinícios. Entrega tenta até três vezes por no máximo cinco minutos, usando nonce estável do Discord contra duplicatas recentes. Isso não garante entrega exatamente uma vez em falhas prolongadas; monitore os logs. Use uma única réplica. Falhas de fonte preservam os placares, sem assumir placar zero. Dados auxiliares antigos são limpos automaticamente.
+
+A tabela usa regex em table/tbody/tr/td, relaciona as duas tabelas HTML por data-idx e valida ordem das colunas, 20 clubes e consistência numérica. Cada `/brasileirao` consulta a fonte, reaproveitando cache de até 60 s. Se a fonte falhar, pode mostrar cópia de até uma hora **marcada como antiga**, com horário da consulta; sem cópia válida, informa indisponibilidade. Não é possível garantir que o site de origem atualize imediatamente. `npm run football:check` testa as fontes reais sem enviar mensagens ao Discord; não integra a CI para evitar depender da disponibilidade externa.
+
+Fontes: https://www.espn.com.br/futebol/classificacao/_/liga/bra.1 e placares públicos em site.api.espn.com. Não há scraping com login ou contorno de bloqueios.
