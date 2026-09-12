@@ -77,16 +77,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Alertas persistidos', () => {
       db,
       client: {
         channels: {
-          fetch: vi
-            .fn()
-            .mockResolvedValue({
-              isTextBased: () => true,
-              send,
-              messages: {
-                edit: vi.fn(),
-                fetch: vi.fn().mockResolvedValue({ delete: vi.fn() }),
-              },
-            }),
+          fetch: vi.fn().mockResolvedValue({
+            isTextBased: () => true,
+            send,
+            messages: {
+              edit: vi.fn(),
+              fetch: vi.fn().mockResolvedValue({ delete: vi.fn() }),
+            },
+          }),
         },
       },
     } as unknown as Context;
