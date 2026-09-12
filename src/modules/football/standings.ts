@@ -90,7 +90,8 @@ function validateStandings(rows: Standing[]) {
 
   if (
     rows.length !== 20 ||
-    new Set(rows.map((row) => row.team.toLocaleLowerCase('pt-BR'))).size !== 20 ||
+    new Set(rows.map((row) => row.team.toLocaleLowerCase('pt-BR'))).size !==
+      20 ||
     rows.some((row, index) => row.position !== index + 1) ||
     rows.some(
       (row) =>
@@ -117,9 +118,9 @@ export function parseCbfStandings(html: string): Standing[] {
   const tableRows = html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi);
 
   for (const tableRow of tableRows) {
-    const cells = [...tableRow[1]!.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(
-      (match) => match[1]!,
-    );
+    const cells = [
+      ...tableRow[1]!.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi),
+    ].map((match) => match[1]!);
     if (cells.length < 9) continue;
 
     const firstCell = textContent(cells[0]!);
@@ -132,9 +133,7 @@ export function parseCbfStandings(html: string): Standing[] {
       .filter((value) => /[A-Za-zÀ-ÿ]/.test(value));
     const team =
       links.sort((a, b) => b.length - a.length)[0] ??
-      firstCell
-        .replace(/^\s*\d{1,2}\s*(?:[+-]\s*\d+|0)?\s*/, '')
-        .trim();
+      firstCell.replace(/^\s*\d{1,2}\s*(?:[+-]\s*\d+|0)?\s*/, '').trim();
 
     const points = numberFromHtml(cells[1]!);
     const played = numberFromHtml(cells[2]!);
@@ -297,7 +296,9 @@ async function fetchLiveStandings(): Promise<StandingsSnapshot> {
     }
   }
 
-  throw new Error(`Fontes da classificação indisponíveis: ${errors.join(' | ')}`);
+  throw new Error(
+    `Fontes da classificação indisponíveis: ${errors.join(' | ')}`,
+  );
 }
 
 export async function getStandings() {
