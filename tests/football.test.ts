@@ -59,8 +59,7 @@ describe('Futebol', () => {
     expect(() => parseStandings(incomplete)).toThrow();
 
     const duplicate = standingsPayload();
-    duplicate.children[0]!.standings.entries[19]!.team.displayName =
-      'Time 0';
+    duplicate.children[0]!.standings.entries[19]!.team.displayName = 'Time 0';
     expect(() => parseStandings(duplicate)).toThrow();
   });
 
