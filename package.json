@@ -1,0 +1,53 @@
+{
+  "name": "golazo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.17.0 <25"
+  },
+  "scripts": {
+    "dev": "node --watch --import node --import tsx src/index.ts",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run tests/database.integration.test.ts",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "node --import tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "commands:register": "node --import tsx src/scripts/register-commands.ts",
+    "commands:check": "node --import tsx src/scripts/register-commands.ts --dry-run",
+    "smoke": "node --import tsx src/scripts/smoke.ts",
+    "card:preview": "node --import tsx src/scripts/card-preview.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "discord.js": "14.27.0",
+    "dotenv": "^16.6.1",
+    "ioredis": "^5.6.1",
+    "pino": "^9.9.0",
+    "sharp": "^0.34.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@types/node": "^24.3.0",
+    "eslint": "^9.34.0",
+    "prettier": "^3.6.2",
+    "prisma": "6.19.3",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.41.0",
+    "vitest": "^3.2.4"
+  },
+  "prisma": {
+    "seed": "node --import tsx prisma/seed.ts"
+  }
+}

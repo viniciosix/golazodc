@@ -1,0 +1,66 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+enum Rarity {
+ COMMON
+ RARE
+ EPIC
+ LEGENDARY
+}
+model User {
+ id String @id @default(cuid())
+ discordId String @unique
+ displayName String
+ bio String @default("")
+ coins BigInt @default(0)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ cards UserCard[]
+}
+model Player {
+ id String @id @default(cuid())
+ externalId String? @unique
+ name String
+ country String
+ club String?
+ position String
+ cards Card[]
+}
+model Season {
+ id String @id @default(cuid())
+ name String @unique
+ startsAt DateTime
+ endsAt DateTime?
+ cards Card[]
+}
+model Card {
+ id String @id @default(cuid())
+ slug String @unique
+ playerId String
+ player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
+ rarity Rarity @default(COMMON)
+ rating Int
+ edition String @default("base")
+ seasonId String?
+ season Season? @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+ imagePath String?
+ createdAt DateTime @default(now())
+ owners UserCard[]
+ @@index([rarity, playerId])
+}
+model UserCard {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+ cardId String
+ card Card @relation(fields: [cardId], references: [id], onDelete: Restrict)
+ acquiredAt DateTime @default(now())
+ source String @default("grant")
+ locked Boolean @default(false)
+ @@index([userId, acquiredAt, id])
+ @@index([cardId])
+}

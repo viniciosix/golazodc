@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces/golazo:cached
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgresql://golazo:golazo@postgres:5432/golazo?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
