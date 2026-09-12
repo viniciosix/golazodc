@@ -126,7 +126,7 @@ export default {
     if (action === 'teste') {
       await channel.send({
         content:
-          '🧪 TESTE SIMULADO • Golazo\n⚽ Exemplo de alerta: São Paulo 1 × 0 Adversário.\nEste placar é fictício. Nenhum gol real foi detectado.',
+          '🧪 TESTE SIMULADO • Tricord\n⚽ Exemplo de alerta: São Paulo 1 × 0 Adversário.\nEste placar é fictício. Nenhum gol real foi detectado.',
         allowedMentions: { parse: [] },
       });
       await interaction.editReply(
