@@ -47,15 +47,23 @@ export interface Match {
   home: { id: string; name: string; score: number };
   away: { id: string; name: string; score: number };
 }
-export async function fetchText(url: string, timeout = 10000): Promise<string> {
+export async function fetchText(
+  url: string,
+  timeout = 10000,
+  headers: Record<string, string> = {},
+): Promise<string> {
   const response = await fetch(url, {
     signal: AbortSignal.timeout(timeout),
     headers: {
       'User-Agent': 'Golazo/0.1 football scoreboard',
       Accept: 'text/html,application/json',
+      ...headers,
     },
   });
-  if (!response.ok) throw new Error(`Football HTTP ${response.status}`);
+  if (!response.ok)
+    throw new Error(
+      `Football HTTP ${response.status} (${new URL(url).hostname})`,
+    );
   if (Number(response.headers.get('content-length')) > 3000000)
     throw new Error('Resposta excessiva');
   const reader = response.body?.getReader();
