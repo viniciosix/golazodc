@@ -91,7 +91,9 @@ export function parseStandings(payload: string | unknown): Standing[] {
     const stats = entryStats(entry);
 
     const position =
-      integer(entry.position) ?? stat(stats, 'rank', 'playoffSeed') ?? index + 1;
+      integer(entry.position) ??
+      stat(stats, 'rank', 'playoffSeed') ??
+      index + 1;
     const played = stat(stats, 'gamesPlayed');
     const wins = stat(stats, 'wins');
     const draws = stat(stats, 'ties', 'draws');
