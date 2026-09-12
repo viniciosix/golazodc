@@ -37,3 +37,15 @@ jobs:
       - run: npm run commands:check
       - run: npm run smoke
       - run: npm run card:preview
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Codespaces services and setup
+        run: |
+          docker compose -f compose.yaml -f .devcontainer/compose.yaml run --build --rm -w /workspaces/golazo app bash .devcontainer/setup.sh
+      - name: Build portable production image
+        run: docker build -t golazo:test .
+      - name: Stop services
+        if: always()
+        run: docker compose -f compose.yaml -f .devcontainer/compose.yaml down -v

@@ -1,10 +1,10 @@
 services:
   app:
     build:
-      context: .
+      context: .devcontainer
       dockerfile: Dockerfile
     volumes:
-      - ..:/workspaces/golazo:cached
+      - .:/workspaces/golazo:cached
     command: sleep infinity
     environment:
       DATABASE_URL: postgresql://golazo:golazo@postgres:5432/golazo?schema=public
