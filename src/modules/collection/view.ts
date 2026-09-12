@@ -6,6 +6,7 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 import type { Rarity } from '@prisma/client';
+import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
 import type { collection } from './service.js';
 export const rarities: Record<Rarity, string> = {
   COMMON: 'Comum',
@@ -21,8 +22,8 @@ export function collectionView(
 ) {
   const key = `${ownerId}:${rarity || 'ALL'}:${playerId || 'ALL'}`;
   const embed = new EmbedBuilder()
-    .setColor(0x7c3aed)
-    .setTitle('Sua coleção • Golazo')
+    .setColor(TRICORD_RED)
+    .setTitle(`Sua coleção • ${TRICORD_NAME}`)
     .setDescription(
       result.cards.length
         ? result.cards
