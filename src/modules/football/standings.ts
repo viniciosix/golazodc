@@ -1,13 +1,18 @@
 import { fetchText } from './provider.js';
 
-export const standingsUrl =
-  'https://www.sofascore.com/pt/football/tournament/brazil/brasileirao-serie-a/325';
+const season = new Date().getUTCFullYear();
+export const standingsUrl = `https://www.cbf.com.br/futebol-brasileiro/tabelas/campeonato-brasileiro/serie-a/${season}`;
+const geStandingsUrl = 'https://ge.globo.com/futebol/brasileirao-serie-a/';
 
-const tournamentId = 325;
-const sofascoreBases = [
-  'https://www.sofascore.com/api/v1',
-  'https://api.sofascore.com/api/v1',
-] as const;
+const browserHeaders = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
+  Accept:
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+  'Cache-Control': 'no-cache',
+  Pragma: 'no-cache',
+} as const;
 
 export interface Standing {
   position: number;
@@ -22,7 +27,15 @@ export interface Standing {
   points: number;
 }
 
+export type StandingsSource = 'CBF' | 'ge';
+
 type JsonObject = Record<string, unknown>;
+
+type StandingsSnapshot = {
+  rows: Standing[];
+  fetchedAt: number;
+  source: StandingsSource;
+};
 
 const object = (value: unknown): JsonObject | undefined =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -36,65 +49,207 @@ const integer = (value: unknown): number | undefined => {
     : undefined;
 };
 
-export function parseStandings(payload: string | unknown): Standing[] {
-  const data = object(
-    typeof payload === 'string' ? JSON.parse(payload) : payload,
-  );
-  if (!data || !Array.isArray(data.standings))
-    throw new Error('Classificação do Sofascore inválida');
+const entities: Record<string, string> = {
+  amp: '&',
+  apos: "'",
+  gt: '>',
+  lt: '<',
+  nbsp: ' ',
+  quot: '"',
+};
 
-  const groups = data.standings
-    .map(object)
-    .filter((group): group is JsonObject => Boolean(group))
-    .map((group) => (Array.isArray(group.rows) ? group.rows : []))
-    .filter((rows) => rows.length > 0)
-    .sort((a, b) => b.length - a.length);
+function decodeHtml(value: string) {
+  return value.replace(/&(#x?[\da-f]+|[a-z]+);/gi, (full, entity: string) => {
+    if (entity.startsWith('#x') || entity.startsWith('#X')) {
+      const code = Number.parseInt(entity.slice(2), 16);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : full;
+    }
+    if (entity.startsWith('#')) {
+      const code = Number.parseInt(entity.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : full;
+    }
+    return entities[entity.toLowerCase()] ?? full;
+  });
+}
 
-  const rows = groups[0];
-  if (!rows || rows.length !== 20) throw new Error('Classificação incompleta');
+function textContent(value: string) {
+  return decodeHtml(
+    value.replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]+>/g, ' '),
+  )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-  const result = rows.map((rawRow) => {
-    const row = object(rawRow);
-    const teamData = row ? object(row.team) : undefined;
-    if (!row || !teamData) throw new Error('Linha de classificação inválida');
+function numberFromHtml(value: string) {
+  const match = textContent(value).match(/-?\d+/);
+  return match ? integer(match[0]) : undefined;
+}
 
+function validateStandings(rows: Standing[]) {
+  rows.sort((a, b) => a.position - b.position);
+
+  if (
+    rows.length !== 20 ||
+    new Set(rows.map((row) => row.team.toLocaleLowerCase('pt-BR'))).size !== 20 ||
+    rows.some((row, index) => row.position !== index + 1) ||
+    rows.some(
+      (row) =>
+        row.played !== row.wins + row.draws + row.losses ||
+        row.difference !== row.goalsFor - row.goalsAgainst ||
+        [
+          row.played,
+          row.wins,
+          row.draws,
+          row.losses,
+          row.goalsFor,
+          row.goalsAgainst,
+          row.points,
+        ].some((value) => value < 0),
+    )
+  )
+    throw new Error('Classificação inválida ou incompleta');
+
+  return rows;
+}
+
+export function parseCbfStandings(html: string): Standing[] {
+  const rows: Standing[] = [];
+  const tableRows = html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi);
+
+  for (const tableRow of tableRows) {
+    const cells = [...tableRow[1]!.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(
+      (match) => match[1]!,
+    );
+    if (cells.length < 9) continue;
+
+    const firstCell = textContent(cells[0]!);
+    const positionMatch = firstCell.match(/^\s*(\d{1,2})\s*(?:[+-]\s*\d+|0)?/);
+    const position = positionMatch ? integer(positionMatch[1]) : undefined;
+    if (!position || position > 20) continue;
+
+    const links = [...cells[0]!.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gi)]
+      .map((match) => textContent(match[1]!))
+      .filter((value) => /[A-Za-zÀ-ÿ]/.test(value));
     const team =
-      typeof teamData.name === 'string'
-        ? teamData.name.trim()
-        : typeof teamData.shortName === 'string'
-          ? teamData.shortName.trim()
-          : '';
-    const position = integer(row.position);
-    const played = integer(row.matches);
-    const wins = integer(row.wins);
-    const draws = integer(row.draws);
-    const losses = integer(row.losses);
-    const goalsFor = integer(row.scoresFor);
-    const goalsAgainst = integer(row.scoresAgainst);
-    const points = integer(row.points);
+      links.sort((a, b) => b.length - a.length)[0] ??
+      firstCell
+        .replace(/^\s*\d{1,2}\s*(?:[+-]\s*\d+|0)?\s*/, '')
+        .trim();
+
+    const points = numberFromHtml(cells[1]!);
+    const played = numberFromHtml(cells[2]!);
+    const wins = numberFromHtml(cells[3]!);
+    const draws = numberFromHtml(cells[4]!);
+    const losses = numberFromHtml(cells[5]!);
+    const goalsFor = numberFromHtml(cells[6]!);
+    const goalsAgainst = numberFromHtml(cells[7]!);
+    const difference = numberFromHtml(cells[8]!);
 
     if (
       !team ||
-      !position ||
+      points === undefined ||
       played === undefined ||
       wins === undefined ||
       draws === undefined ||
       losses === undefined ||
       goalsFor === undefined ||
       goalsAgainst === undefined ||
-      points === undefined
+      difference === undefined
     )
-      throw new Error('Linha de classificação inválida');
+      continue;
 
-    const difference = goalsFor - goalsAgainst;
+    rows.push({
+      position,
+      team,
+      played,
+      wins,
+      draws,
+      losses,
+      goalsFor,
+      goalsAgainst,
+      difference,
+      points,
+    });
+  }
+
+  return validateStandings(rows);
+}
+
+function extractJsonLiteral(script: string, name: string) {
+  const marker = `const ${name} =`;
+  const markerIndex = script.indexOf(marker);
+  if (markerIndex < 0) throw new Error(`${name} não encontrado no GE`);
+
+  const objectStart = script.indexOf('{', markerIndex + marker.length);
+  if (objectStart < 0) throw new Error(`${name} inválido no GE`);
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = objectStart; index < script.length; index += 1) {
+    const char = script[index]!;
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === '{') depth += 1;
+    else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return script.slice(objectStart, index + 1);
+    }
+  }
+
+  throw new Error(`${name} incompleto no GE`);
+}
+
+export function parseGeStandings(html: string): Standing[] {
+  const script = html.match(
+    /<script\b(?=[^>]*\bid=["']scriptReact["'])[^>]*>([\s\S]*?)<\/script>/i,
+  )?.[1];
+  if (!script) throw new Error('Dados da classificação não encontrados no GE');
+
+  const data = object(JSON.parse(extractJsonLiteral(script, 'classificacao')));
+  if (!data || !Array.isArray(data.classificacao))
+    throw new Error('Classificação inválida no GE');
+
+  const rows = data.classificacao.map((rawRow) => {
+    const row = object(rawRow);
+    if (!row) throw new Error('Linha inválida no GE');
+
+    const position = integer(row.ordem);
+    const team =
+      typeof row.nome_popular === 'string' ? row.nome_popular.trim() : '';
+    const points = integer(row.pontos);
+    const played = integer(row.jogos);
+    const wins = integer(row.vitorias);
+    const draws = integer(row.empates);
+    const losses = integer(row.derrotas);
+    const goalsFor = integer(row.gols_pro);
+    const goalsAgainst = integer(row.gols_contra);
+    const difference = integer(row.saldo_gols);
 
     if (
-      played !== wins + draws + losses ||
-      [played, wins, draws, losses, goalsFor, goalsAgainst, points].some(
-        (value) => value < 0,
-      )
+      !position ||
+      !team ||
+      points === undefined ||
+      played === undefined ||
+      wins === undefined ||
+      draws === undefined ||
+      losses === undefined ||
+      goalsFor === undefined ||
+      goalsAgainst === undefined ||
+      difference === undefined
     )
-      throw new Error('Estatísticas inconsistentes');
+      throw new Error('Linha incompleta no GE');
 
     return {
       position,
@@ -110,63 +265,39 @@ export function parseStandings(payload: string | unknown): Standing[] {
     };
   });
 
-  result.sort((a, b) => a.position - b.position);
-
-  if (
-    new Set(result.map((value) => value.team)).size !== 20 ||
-    result.some((row, index) => row.position !== index + 1)
-  )
-    throw new Error('Classificação inválida');
-
-  return result;
+  return validateStandings(rows);
 }
 
-let cached: { rows: Standing[]; fetchedAt: number } | undefined;
-let pending: Promise<{ rows: Standing[]; fetchedAt: number }> | undefined;
-let seasonCache: { id: number; expiresAt: number } | undefined;
+let cached: StandingsSnapshot | undefined;
+let pending: Promise<StandingsSnapshot> | undefined;
 
-async function currentSeasonId(base: string) {
-  if (seasonCache && seasonCache.expiresAt > Date.now()) return seasonCache.id;
+async function fetchLiveStandings(): Promise<StandingsSnapshot> {
+  const sources: Array<{
+    source: StandingsSource;
+    url: string;
+    parser: (html: string) => Standing[];
+  }> = [
+    { source: 'CBF', url: standingsUrl, parser: parseCbfStandings },
+    { source: 'ge', url: geStandingsUrl, parser: parseGeStandings },
+  ];
+  const errors: string[] = [];
 
-  const data = object(
-    JSON.parse(
-      await fetchText(`${base}/unique-tournament/${tournamentId}/seasons`),
-    ),
-  );
-  if (!data || !Array.isArray(data.seasons))
-    throw new Error('Temporadas do Sofascore indisponíveis');
-
-  const seasons = data.seasons
-    .map(object)
-    .filter((season): season is JsonObject => Boolean(season));
-  const currentYear = String(new Date().getUTCFullYear());
-  const current =
-    seasons.find((season) => season.year === currentYear) ?? seasons[0];
-  const id = current ? integer(current.id) : undefined;
-  if (!id) throw new Error('Temporada atual não encontrada');
-
-  seasonCache = { id, expiresAt: Date.now() + 21600000 };
-  return id;
-}
-
-async function fetchLiveStandings() {
-  let lastError: unknown;
-
-  for (const base of sofascoreBases) {
+  for (const source of sources) {
     try {
-      const seasonId = await currentSeasonId(base);
-      const url = `${base}/unique-tournament/${tournamentId}/season/${seasonId}/standings/total`;
+      const html = await fetchText(source.url, 12000, browserHeaders);
       return {
-        rows: parseStandings(await fetchText(url)),
+        rows: source.parser(html),
         fetchedAt: Date.now(),
+        source: source.source,
       };
     } catch (error) {
-      seasonCache = undefined;
-      lastError = error;
+      errors.push(
+        `${source.source}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
-  throw lastError ?? new Error('Fontes da classificação indisponíveis');
+  throw new Error(`Fontes da classificação indisponíveis: ${errors.join(' | ')}`);
 }
 
 export async function getStandings() {
