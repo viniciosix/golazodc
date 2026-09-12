@@ -33,6 +33,11 @@ jobs:
       - run: npm ci
       - run: npm run db:generate
       - run: npm run db:deploy
+      - name: Show standings Prettier diff
+        run: |
+          npx prettier --write src/modules/football/standings.ts tests/football.test.ts
+          git diff -- src/modules/football/standings.ts tests/football.test.ts
+          exit 1
       - run: npm run check
       - run: npm run commands:check
       - run: npm run smoke
