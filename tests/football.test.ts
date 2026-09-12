@@ -59,14 +59,17 @@ describe('Futebol', () => {
     expect(() => parseStandings(incomplete)).toThrow();
 
     const duplicate = standingsPayload();
-    duplicate.children[0]!.standings.entries[19]!.team.displayName = 'Time 0';
+    duplicate.children[0]!.standings.entries[19]!.team.displayName =
+      'Time 0';
     expect(() => parseStandings(duplicate)).toThrow();
   });
 
   it('aceita differential como fallback para saldo de gols', () => {
     const payload = standingsPayload();
     const stats = payload.children[0]!.standings.entries[0]!.stats;
-    const goalDifference = stats.find((item) => item.name === 'goalDifference')!;
+    const goalDifference = stats.find(
+      (item) => item.name === 'goalDifference',
+    )!;
     goalDifference.name = 'differential';
     expect(parseStandings(payload)[0]!.difference).toBe(5);
   });
