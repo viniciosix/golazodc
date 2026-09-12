@@ -7,6 +7,7 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 import type { Command } from '../../core/types.js';
+import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
 import { profile } from '../../modules/users/service.js';
 export default {
   data: new SlashCommandBuilder()
@@ -20,8 +21,8 @@ export default {
       interaction.user.username,
     );
     const embed = new EmbedBuilder()
-      .setColor(0x7c3aed)
-      .setTitle('Perfil • Golazo')
+      .setColor(TRICORD_RED)
+      .setTitle(`Perfil • ${TRICORD_NAME}`)
       .setDescription(user.bio || 'Seu clube começa aqui!')
       .addFields(
         { name: 'Colecionador', value: user.displayName },
