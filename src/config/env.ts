@@ -10,7 +10,7 @@ export const baseSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
-  GOAL_POLL_SECONDS: z.coerce.number().int().min(30).max(300).default(60),
+  GOAL_POLL_SECONDS: z.coerce.number().int().min(20).max(300).default(20),
   DATABASE_URL: z
     .string()
     .url()

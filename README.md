@@ -163,7 +163,7 @@ Aplique a nova migração (`npm run db:deploy`), registre os comandos novamente 
 
 Para trocar de volta ao São Paulo, use `/gols ligar` sem opções. Cada canal possui uma configuração time/competição; canais diferentes podem acompanhar times diferentes. Para São Paulo em outra competição, selecione a competição correspondente. Não há detecção automática de todas as competições do clube. Gerenciar servidor é obrigatório para `/gols`, e o bot precisa visualizar/enviar mensagens no canal. Não usa @everyone, cargos ou menções automáticas.
 
-`GOAL_POLL_SECONDS=60` define o intervalo entre ciclos (30–300 s), além do tempo de consulta. Há atraso da fonte e polling; não é transmissão instantânea. Consulta placares públicos da ESPN (interface não contratual, sujeita a indisponibilidade ou mudanças). Não depende de token esportivo, Redis ou automações do ChatGPT. O processo do bot precisa estar ligado.
+`GOAL_POLL_SECONDS=20` define o intervalo entre ciclos (20–300 s), além do tempo de consulta. Há atraso da fonte e polling; não é transmissão instantânea. Consulta placares públicos da ESPN (interface não contratual, sujeita a indisponibilidade ou mudanças). Não depende de token esportivo, Redis ou automações do ChatGPT. O processo do bot precisa estar ligado.
 
 Ao ligar, o placar atual vira baseline; gols anteriores não são anunciados. Só aumentos do placar do time escolhido disparam gol. Reduções de qualquer lado geram correção de placar/possível anulação. Pênaltis de desempate e autoria do gol não são acompanhados. Se a fonte saltar dois gols entre consultas, uma atualização informa o placar novo. Uma pausa superior a cinco minutos reestabelece o baseline, evitando gols antigos. Jogos novos sem snapshot começam no placar observado.
 
