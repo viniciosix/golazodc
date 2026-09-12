@@ -31,7 +31,7 @@ export default {
           .setURL(standingsUrl)
           .setDescription(lines.join('\n'))
           .setFooter({
-            text: `Sofascore • ${table.stale ? 'Fonte indisponível: última cópia válida' : 'Consulta com cache de até 60 segundos'}`,
+            text: `${table.source} • ${table.stale ? 'Fontes indisponíveis: última cópia válida' : 'Consulta com cache de até 60 segundos'}`,
           })
           .setTimestamp(table.fetchedAt),
       ],
