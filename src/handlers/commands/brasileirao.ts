@@ -16,7 +16,7 @@ export default {
       table = await getStandings();
     } catch {
       throw new UserError(
-        'A fonte da tabela está indisponível ou mudou de formato. Tente novamente mais tarde.',
+        'Não consegui consultar a tabela do Brasileirão agora. Tente novamente em instantes.',
       );
     }
     const lines = table.rows.map(
@@ -31,7 +31,7 @@ export default {
           .setURL(standingsUrl)
           .setDescription(lines.join('\n'))
           .setFooter({
-            text: `ESPN • ${table.stale ? 'Fonte indisponível: última cópia válida' : 'Consulta com cache de até 60 segundos'}`,
+            text: `Sofascore • ${table.stale ? 'Fonte indisponível: última cópia válida' : 'Consulta com cache de até 60 segundos'}`,
           })
           .setTimestamp(table.fetchedAt),
       ],
