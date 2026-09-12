@@ -35,7 +35,10 @@ export function narrationEmbed(
       ),
     )
     .setDescription(
-      `**${match.state === 'post' ? 'PARTIDA ENCERRADA' : 'NARRAÇÃO AO VIVO'} • ${escapeMarkdown(match.clock)}**\n\n${plays || (unavailable ? 'Narração indisponível na fonte neste momento.' : 'Aguardando os próximos lances da fonte…')}`,
+      `**${match.state === 'post' ? 'PARTIDA ENCERRADA' : 'NARRAÇÃO AO VIVO'} • ${escapeMarkdown(match.clock.slice(0, 100))}**\n\n${plays || (unavailable ? 'Narração indisponível na fonte neste momento.' : 'Aguardando os próximos lances da fonte…')}`.slice(
+        0,
+        4096,
+      ),
     )
     .setFooter({
       text: `${TRICORD_NAME} • ESPN • Atualização periódica; pode haver atraso`,

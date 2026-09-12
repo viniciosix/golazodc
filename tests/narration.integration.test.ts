@@ -111,4 +111,60 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Narração persistente', () => 
     ).rejects.toMatchObject({ code: 50013 });
     expect(send).toHaveBeenCalledTimes(count);
   });
+  it('mantém a mensagem ao entrar no segundo tempo e recupera edição transitória', async () => {
+    await db.matchNarration.deleteMany({
+      where: { subscription: { channelId } },
+    });
+    const sub = await enableGoals(
+      db,
+      {
+        channelId,
+        guildId: 'test',
+        league: 'bra.1',
+        teamId: '2026',
+        teamName: 'São Paulo',
+      },
+      [match],
+    );
+    const send = vi.fn().mockResolvedValue({ id: 'halftime-message' });
+    const edit = vi.fn().mockResolvedValue({});
+    const context = {
+      db,
+      client: {
+        channels: {
+          fetch: vi.fn().mockResolvedValue({
+            isTextBased: () => true,
+            send,
+            messages: { edit },
+          }),
+        },
+      },
+    } as unknown as Context;
+    await syncNarration(context, sub, { ...match, clock: 'Intervalo' }, []);
+    edit.mockRejectedValueOnce(new Error('Temporary network failure'));
+    const second = { ...match, clock: 'Início do segundo tempo' };
+    await expect(syncNarration(context, sub, second, [])).rejects.toThrow(
+      'Temporary network failure',
+    );
+    await syncNarration(context, sub, second, [
+      { sequence: 100, clock: "46'", text: 'Início do segundo tempo.' },
+    ]);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(edit).toHaveBeenLastCalledWith(
+      'halftime-message',
+      expect.anything(),
+    );
+    expect(
+      (
+        await db.matchNarration.findUnique({
+          where: { subscriptionId: sub.id },
+        })
+      )?.messageId,
+    ).toBe('halftime-message');
+    expect(
+      await db.goalNotice.count({
+        where: { subscriptionId: sub.id, sentAt: null },
+      }),
+    ).toBe(0);
+  });
 });

@@ -6,13 +6,16 @@ export interface CommentaryLine {
   text: string;
 }
 const lineSchema = z.object({
-  sequence: z.number().int().nonnegative(),
+  sequence: z
+    .union([z.number().int().nonnegative(), z.string().regex(/^\d+$/)])
+    .transform(Number)
+    .refine(Number.isSafeInteger),
   text: z.string().min(1),
-  time: z.object({ displayValue: z.string() }).optional(),
+  time: z.object({ displayValue: z.string().nullish() }).nullish(),
 });
 export function parseCommentary(input: unknown): CommentaryLine[] {
   const data = z
-    .object({ commentary: z.array(z.unknown()).optional() })
+    .object({ commentary: z.array(z.unknown()).nullish() })
     .parse(input);
   const lines = (data.commentary || []).flatMap((raw) => {
     const parsed = lineSchema.safeParse(raw);

@@ -1,3 +1,4 @@
+import { logger } from '../../core/logger.js';
 import { z } from 'zod';
 export const leagues = {
   'bra.1': 'Brasileirão Série A',
@@ -22,17 +23,21 @@ export const teamSchema = z.object({
 });
 const competitor = z.object({
   homeAway: z.enum(['home', 'away']),
-  score: z.string().regex(/^\d+$/),
+  score: z
+    .union([z.string().regex(/^\d+$/), z.number().int().nonnegative()])
+    .transform(Number)
+    .refine(Number.isSafeInteger),
   team: teamSchema,
 });
 const eventSchema = z.object({
   id: z.string(),
-  date: z.string().datetime(),
+  date: z.string().datetime({ offset: true }),
   status: z.object({
-    displayClock: z.string().optional(),
+    displayClock: z.string().nullish(),
     type: z.object({
       state: z.enum(['pre', 'in', 'post']),
-      detail: z.string(),
+      detail: z.string().nullish(),
+      name: z.string().optional(),
     }),
   }),
   competitions: z
@@ -85,26 +90,56 @@ export async function fetchText(
 const api = (league: League, resource: string) =>
   `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueSchema.parse(league)}/${resource}`;
 export function parseMatches(data: unknown): Match[] {
-  const parsed = z.object({ events: z.array(eventSchema) }).parse(data);
-  return parsed.events.map((event) => {
+  const parsed = z.object({ events: z.array(z.unknown()) }).parse(data);
+  const matches = parsed.events.flatMap((raw) => {
+    const result = eventSchema.safeParse(raw);
+    if (!result.success) {
+      const id = z.object({ id: z.string().regex(/^\d+$/) }).safeParse(raw);
+      logger.warn(
+        {
+          eventId: id.success ? id.data.id : 'unknown',
+          fields: result.error.issues.map((issue) => issue.path.join('.')),
+        },
+        'Partida temporariamente incompleta; aguardando próxima consulta',
+      );
+      return [];
+    }
+    const event = result.data;
     const competitors = event.competitions[0]!.competitors;
     const home = competitors.find((c) => c.homeAway === 'home');
     const away = competitors.find((c) => c.homeAway === 'away');
-    if (!home || !away) throw new Error('Mandante/visitante ausente');
+    if (!home || !away) {
+      logger.warn({ eventId: event.id }, 'Mandante/visitante ausente');
+      return [];
+    }
     const side = (c: typeof home) => ({
       id: c.team.id,
       name: c.team.displayName,
       score: Number(c.score),
     });
-    return {
-      id: event.id,
-      date: event.date,
-      state: event.status.type.state,
-      clock: event.status.displayClock || event.status.type.detail,
-      home: side(home),
-      away: side(away),
-    };
+    return [
+      {
+        id: event.id,
+        date: event.date,
+        state: event.status.type.state,
+        clock:
+          event.status.type.name === 'STATUS_HALFTIME'
+            ? 'Intervalo'
+            : event.status.displayClock ||
+              event.status.type.detail ||
+              (event.status.type.state === 'post'
+                ? 'Encerrado'
+                : 'Relógio indisponível'),
+        home: side(home),
+        away: side(away),
+      },
+    ];
   });
+  if (parsed.events.length && !matches.length)
+    throw new Error(
+      'Todas as partidas vieram incompletas; mantendo estado anterior',
+    );
+  return matches;
 }
 export async function fetchMatches(league: League): Promise<Match[]> {
   const now = Date.now();
