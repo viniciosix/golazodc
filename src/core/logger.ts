@@ -14,8 +14,16 @@ export const logger = pino({
     censor: '[REDACTED]',
   },
   serializers: {
-    err: (error: unknown) => ({
-      type: error instanceof Error ? error.name : 'UnknownError',
-    }),
+    err: (error: unknown) =>
+      error instanceof Error
+        ? {
+            type: error.name,
+            message: error.message,
+            stack: error.stack,
+          }
+        : {
+            type: 'UnknownError',
+            message: String(error),
+          },
   },
 });
