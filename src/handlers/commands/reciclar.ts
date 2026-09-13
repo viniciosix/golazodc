@@ -39,7 +39,7 @@ export default {
           new ButtonBuilder()
             .setCustomId(`recycle:${interaction.user.id}:${copy.id}`)
             .setLabel('Confirmar reciclagem')
-            .setStyle(ButtonStyle.Danger),
+            .setStyle(ButtonStyle.Secondary),
         ),
       ],
     });

@@ -116,7 +116,7 @@ export default {
             new ButtonBuilder()
               .setCustomId(`marketbuy:${interaction.user.id}:${entry.id}`)
               .setLabel('Confirmar compra')
-              .setStyle(ButtonStyle.Danger),
+              .setStyle(ButtonStyle.Secondary),
           ),
         ],
       });
