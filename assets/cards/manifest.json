@@ -11,7 +11,7 @@
     "file": "artur.png",
     "slug": "inicial-artur",
     "name": "Artur",
-    "position": "ATA",
+    "position": "SA",
     "rarity": "COMMON",
     "edition": "São Paulo • Inicial"
   },
@@ -43,7 +43,7 @@
     "file": "luciano.png",
     "slug": "inicial-luciano",
     "name": "Luciano",
-    "position": "ATA",
+    "position": "CA",
     "rarity": "COMMON",
     "edition": "São Paulo • Inicial"
   },
@@ -51,7 +51,7 @@
     "file": "marcos_antonio.png",
     "slug": "inicial-marcos-antonio",
     "name": "Marcos Antônio",
-    "position": "MEI",
+    "position": "MC",
     "rarity": "COMMON",
     "edition": "São Paulo • Inicial"
   },
@@ -59,7 +59,7 @@
     "file": "pablo_maia.png",
     "slug": "inicial-pablo-maia",
     "name": "Pablo Maia",
-    "position": "VOL",
+    "position": "MC",
     "rarity": "COMMON",
     "edition": "São Paulo • Inicial"
   },
