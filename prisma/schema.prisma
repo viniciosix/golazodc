@@ -20,6 +20,11 @@ model User {
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
  cards UserCard[]
+ starterAt DateTime?
+ dailyAt DateTime?
+ workAt DateTime?
+ streak Int @default(0)
+ walletEntries WalletEntry[]
 }
 model Player {
  id String @id @default(cuid())
@@ -50,6 +55,8 @@ model Card {
  imagePath String?
  createdAt DateTime @default(now())
  owners UserCard[]
+ active Boolean @default(false)
+ artwork CardArtwork?
  @@index([rarity, playerId])
 }
 model UserCard {
@@ -61,6 +68,10 @@ model UserCard {
  acquiredAt DateTime @default(now())
  source String @default("grant")
  locked Boolean @default(false)
+ destroyedAt DateTime?
+ listings MarketListing[]
+ offeredTrades TradeOffer[] @relation("offeredCard")
+ wantedTrades TradeOffer[] @relation("wantedCard")
  @@index([userId, acquiredAt, id])
  @@index([cardId])
 }
@@ -116,4 +127,63 @@ model MatchNarration {
  sinceSequence Int @default(-1)
  payloadHash String @default("")
  updatedAt DateTime @updatedAt
+}
+
+model CardArtwork {
+ cardId String @id
+ card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+ png Bytes
+ sha256 String
+}
+model EconomyOperation {
+ id String @id
+ actorId String
+ action String
+ result Json
+ createdAt DateTime @default(now())
+ entries WalletEntry[]
+}
+model WalletEntry {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+ operationId String
+ operation EconomyOperation @relation(fields: [operationId], references: [id], onDelete: Restrict)
+ delta BigInt
+ balance BigInt
+ reason String
+ createdAt DateTime @default(now())
+ @@index([userId, createdAt])
+}
+enum OfferStatus {
+ OPEN
+ COMPLETED
+ CANCELLED
+ EXPIRED
+}
+model MarketListing {
+ id String @id @default(cuid())
+ userCardId String
+ userCard UserCard @relation(fields: [userCardId], references: [id], onDelete: Restrict)
+ sellerId String
+ buyerId String?
+ price BigInt
+ status OfferStatus @default(OPEN)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([status, createdAt])
+}
+model TradeOffer {
+ id String @id @default(cuid())
+ senderId String
+ recipientId String
+ offeredId String
+ offered UserCard @relation("offeredCard", fields: [offeredId], references: [id], onDelete: Restrict)
+ wantedId String
+ wanted UserCard @relation("wantedCard", fields: [wantedId], references: [id], onDelete: Restrict)
+ status OfferStatus @default(OPEN)
+ expiresAt DateTime
+ createdAt DateTime @default(now())
+ @@index([status, expiresAt])
+ @@index([recipientId, status])
 }

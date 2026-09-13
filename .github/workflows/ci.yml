@@ -33,6 +33,8 @@ jobs:
       - run: npm ci
       - run: npm run db:generate
       - run: npm run db:deploy
+      - run: npm run cards:import
+      - run: npm run cards:import
       - run: npm run check
       - run: npm run commands:check
       - run: npm run smoke

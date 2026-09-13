@@ -190,3 +190,67 @@ git pull && npm run build && npm run db:deploy && npm run commands:register && n
 ```
 
 A nova migração adiciona MatchNarration e o ID da partida aos alertas, sem apagar dados existentes. Os testes de narração usam PostgreSQL real com transporte Discord simulado e verificam edição, ordem envio/apagamento/recriação, deduplicação e recuperação de mensagem apagada.
+
+## Cartas e Tricoin
+
+As nove artes originais ficam em `assets/cards`, com nomes e posições editáveis no `manifest.json`. A série inicial é comum e não possui nota inventada. A importação é idempotente: não duplica cartas nem sobrescreve alterações feitas pelo administrador. As artes também são gravadas no PostgreSQL, inclusive novos uploads. Faça backup do banco para preservar inventários, economia e imagens.
+
+### Atualizar um Codespace existente
+
+Pare o processo anterior com Ctrl+C e execute na raiz do repositório:
+
+```bash
+git pull --ff-only
+npm ci
+npm run db:generate
+npm run db:deploy
+npm run cards:import
+npm run build
+npm run commands:register
+npm run dev
+```
+
+Se houver alterações locais, faça commit delas antes do pull. A configuração de um Codespace novo já importa as cartas automaticamente. Os comandos de registro usam as credenciais do seu `.env`; nunca publique esse arquivo. O desenvolvimento segue em TypeScript/Node.js; Python não é uma dependência do projeto.
+
+### Como jogar
+
+| Comando                                                 | Resultado                                                                      |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `/iniciar`                                              | Kit único com 3 cartas distintas disponíveis e 100 Tricoins                    |
+| `/diario`                                               | 100 Tricoins a cada 24 horas; bônus de 10 por dia consecutivo, até 160         |
+| `/trabalhar`                                            | 25 a 45 Tricoins a cada 4 horas                                                |
+| `/loja`                                                 | Pack Básico: 3 cartas por 150; Pack Grande: 5 por 250                          |
+| `/colecao`                                              | Inventário paginado, filtros, IDs das cópias e menu para ver as artes          |
+| `/carta`                                                | Busca por nome e visualização de uma carta do catálogo                         |
+| `/carteira`                                             | Saldo e últimas 10 movimentações                                               |
+| `/reciclar copia:ID`                                    | Confirma a remoção de uma repetida: comum 15, rara 40, épica 100, lendária 300 |
+| `/mercado listar`                                       | Anúncios com paginação                                                         |
+| `/mercado vender copia:ID preco:VALOR`                  | Reserva sua carta e cria anúncio de 1 a 1.000.000 Tricoins                     |
+| `/mercado comprar anuncio:ID`                           | Mostra preço e pede confirmação antes de transferir carta e moedas             |
+| `/mercado cancelar anuncio:ID`                          | Retira seu anúncio e libera a carta                                            |
+| `/troca propor pessoa:USUARIO oferecida:ID desejada:ID` | Oferece sua cópia pela da outra pessoa                                         |
+| `/troca listar`                                         | Mostra propostas enviadas e recebidas                                          |
+| `/troca aceitar proposta:ID`                            | Apenas o destinatário pode concluir a troca                                    |
+| `/troca cancelar proposta:ID`                           | Qualquer participante pode recusar/cancelar                                    |
+
+Compartilhe os IDs das cópias com o outro colecionador para negociar. O ID de uma cópia difere do código do catálogo e do ID do anúncio. As propostas expiram em 24 horas; a reserva é liberada pelo processo de limpeza a cada minuto. A carta do destinatário não é bloqueada sem consentimento. Anúncios de mercado ficam abertos até a compra ou cancelamento. Não há taxa de venda.
+
+O diário usa intervalo de 24 horas, não meia-noite; a sequência reinicia após 48 horas sem resgate. Tricoin é exclusivamente virtual, sem compra por dinheiro, saque ou conversão monetária. A economia é global por conta Discord. Não pretende detectar contas alternativas.
+
+Os pesos por raridade são 70/22/7/1, recalculados apenas entre raridades disponíveis. Inicialmente, todas as nove cartas são comuns: a chance de comum é 100%. A loja mostra as probabilidades efetivas antes da compra. Dentro de cada raridade, as cartas têm chances iguais; packs permitem repetidas e não garantem raridades. O kit inicial sorteia até três cartas distintas do catálogo ativo.
+
+### Adicionar novas cartas como administrador
+
+Defina no `.env` os servidores que podem administrar o catálogo global:
+
+```dotenv
+CARD_ADMIN_GUILD_IDS=ID_DO_SEU_SERVIDOR
+```
+
+Para mais de um, separe por vírgulas. Se vazio, utiliza `DISCORD_GUILD_ID`; sem ambos configurados, o cadastro fica bloqueado. Além disso, o usuário precisa da permissão **Administrador** no Discord. A checagem ocorre em toda execução, mesmo se alguém alterar a visibilidade do comando.
+
+Use `/cartas-admin adicionar`, anexe o PNG e escolha um código único, como `calleri-especial-2026`. Informe nome, posição, edição e raridade; o nome padrão vem do arquivo. O limite é 10 MB e 25 milhões de pixels, apenas PNG estático. A imagem original é preservada. Use `/cartas-admin disponibilidade codigo:CODIGO ativa:false` para retirar uma carta dos packs sem removê-la dos inventários existentes. Para corrigir uma arte, desative a antiga e cadastre uma nova edição com outro código.
+
+Em produção/Docker/Railway, aplique `npm run db:deploy` e `node dist/scripts/import-cards.js` antes de `npm start`. O Docker já inclui as artes iniciais. Redis continua opcional. Use um processo sempre ativo; o Codespace suspenso não mantém o bot conectado. A plataforma pode ser trocada sem mudar a economia.
+
+As operações usam transações serializáveis, chave de idempotência e registro de movimentações para impedir cobranças duplicadas, saldo negativo e transferência simultânea da mesma cópia. Cartas recicladas permanecem no histórico, mas saem do inventário. A CI valida concorrência com PostgreSQL real. Execute `npm run check`; testes de banco exigem `TEST_DATABASE_URL` apontando para um banco descartável migrado e com `npm run cards:import` aplicado.

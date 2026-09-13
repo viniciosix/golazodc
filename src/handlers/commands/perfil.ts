@@ -27,7 +27,7 @@ export default {
       .addFields(
         { name: 'Colecionador', value: user.displayName },
         { name: 'Cartas', value: String(user.cards), inline: true },
-        { name: 'Moedas', value: user.coins.toString(), inline: true },
+        { name: 'Tricoins', value: user.coins.toString(), inline: true },
       );
     await interaction.editReply({
       embeds: [embed],

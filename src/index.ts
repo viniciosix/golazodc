@@ -11,6 +11,8 @@ import { route } from './core/router.js';
 import { createDatabase } from './infrastructure/database.js';
 import { createCache, type Cache } from './infrastructure/cache.js';
 import { startGoalWorker } from './modules/football/worker.js';
+import { startEconomyWorker } from './modules/economy/worker.js';
+let stopEconomyWorker: (() => Promise<void>) | undefined;
 let stopGoalWorker: (() => Promise<void>) | undefined;
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -24,6 +26,7 @@ async function shutdown(code: number) {
   stopping = true;
   const deadline = setTimeout(() => process.exit(1), 10000).unref();
   await stopGoalWorker?.();
+  await stopEconomyWorker?.();
   client.destroy();
   await Promise.allSettled([db.$disconnect(), cache?.close()]);
   clearTimeout(deadline);
@@ -44,6 +47,8 @@ try {
   const handlers = await loadHandlers();
   await db.$connect();
   await db.user.count();
+  await db.cardArtwork.count();
+  stopEconomyWorker = startEconomyWorker(db);
   cache = await createCache(config.REDIS_URL as string | undefined);
   const context = { client, db, cache };
   for (const event of handlers.events) {

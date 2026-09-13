@@ -53,11 +53,21 @@ describe('Infraestrutura', () => {
     const handlers = await loadHandlers();
     expect([...handlers.commands.keys()].sort()).toEqual([
       'brasileirao',
+      'carta',
+      'cartas-admin',
+      'carteira',
       'colecao',
+      'diario',
       'gols',
+      'iniciar',
       'jogos',
+      'loja',
+      'mercado',
       'perfil',
       'ping',
+      'reciclar',
+      'trabalhar',
+      'troca',
     ]);
     expect(handlers.buttons.has('collection')).toBe(true);
     expect(handlers.selects.has('rarity')).toBe(true);

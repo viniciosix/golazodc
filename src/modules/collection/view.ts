@@ -29,10 +29,10 @@ export function collectionView(
         ? result.cards
             .map(
               (item) =>
-                `**${item.card.player.name}** · ${item.card.rating} · ${rarities[item.card.rarity]} · ${item.card.edition}`,
+                `**${item.card.player.name}** · ${rarities[item.card.rarity]} · ${item.card.edition} ${item.locked ? '🔒' : ''}\nCópia: \`${item.id}\``,
             )
             .join('\n')
-        : 'Nenhuma carta encontrada. Sua coleção começa vazia.',
+        : 'Nenhuma carta encontrada. Use /iniciar para receber seu kit inicial.',
     )
     .setFooter({
       text: `Página ${result.page + 1}/${result.pages} • ${result.total} cartas`,
@@ -64,7 +64,32 @@ export function collectionView(
   );
   return {
     embeds: [embed],
-    components: [buttons, select],
+    components: [
+      buttons,
+      select,
+      ...(result.cards.length
+        ? [
+            new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+              new StringSelectMenuBuilder()
+                .setCustomId(`card-art:${ownerId}`)
+                .setPlaceholder('Ver arte da carta')
+                .addOptions(
+                  ...[
+                    ...new Map(
+                      result.cards.map((c) => [
+                        c.cardId,
+                        {
+                          label: c.card.player.name.slice(0, 100),
+                          value: c.cardId,
+                        },
+                      ]),
+                    ).values(),
+                  ],
+                ),
+            ),
+          ]
+        : []),
+    ],
     allowedMentions: { parse: [] as never[] },
   };
 }

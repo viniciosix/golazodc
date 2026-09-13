@@ -12,7 +12,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run tests/database.integration.test.ts tests/goals.integration.test.ts tests/narration.integration.test.ts",
+    "test:integration": "vitest run tests/*.integration.test.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -26,7 +26,8 @@
     "commands:check": "node --import tsx src/scripts/register-commands.ts --dry-run",
     "smoke": "node --import tsx src/scripts/smoke.ts",
     "card:preview": "node --import tsx src/scripts/card-preview.ts",
-    "football:check": "node --import tsx src/scripts/football-check.ts"
+    "football:check": "node --import tsx src/scripts/football-check.ts",
+    "cards:import": "node --import tsx src/scripts/import-cards.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

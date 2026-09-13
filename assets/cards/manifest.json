@@ -1,0 +1,74 @@
+[
+  {
+    "file": "arboleda.png",
+    "slug": "inicial-arboleda",
+    "name": "Arboleda",
+    "position": "ZAG",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "artur.png",
+    "slug": "inicial-artur",
+    "name": "Artur",
+    "position": "ATA",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "calleri.png",
+    "slug": "inicial-calleri",
+    "name": "Calleri",
+    "position": "CA",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "domingos_duarte.png",
+    "slug": "inicial-domingos-duarte",
+    "name": "Domingos Duarte",
+    "position": "ZAG",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "lucasramon.png",
+    "slug": "inicial-lucasramon",
+    "name": "Lucas Ramon",
+    "position": "LD",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "luciano.png",
+    "slug": "inicial-luciano",
+    "name": "Luciano",
+    "position": "ATA",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "marcos_antonio.png",
+    "slug": "inicial-marcos-antonio",
+    "name": "Marcos Antônio",
+    "position": "MEI",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "pablo_maia.png",
+    "slug": "inicial-pablo-maia",
+    "name": "Pablo Maia",
+    "position": "VOL",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  },
+  {
+    "file": "sabino.png",
+    "slug": "inicial-sabino",
+    "name": "Sabino",
+    "position": "ZAG",
+    "rarity": "COMMON",
+    "edition": "São Paulo • Inicial"
+  }
+]

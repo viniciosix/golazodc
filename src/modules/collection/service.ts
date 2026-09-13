@@ -12,6 +12,7 @@ export async function collection(
   const user = await ensureUser(db, discordId, displayName);
   const where = {
     userId: user.id,
+    destroyedAt: null,
     card: { ...(rarity ? { rarity } : {}), ...(playerId ? { playerId } : {}) },
   };
   return db.$transaction(

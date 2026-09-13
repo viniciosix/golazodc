@@ -16,6 +16,8 @@ export async function profile(
   displayName: string,
 ) {
   const user = await ensureUser(db, discordId, displayName);
-  const cards = await db.userCard.count({ where: { userId: user.id } });
+  const cards = await db.userCard.count({
+    where: { userId: user.id, destroyedAt: null },
+  });
   return { ...user, cards };
 }
