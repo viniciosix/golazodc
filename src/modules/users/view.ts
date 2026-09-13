@@ -1,0 +1,36 @@
+import { EmbedBuilder, type Guild, type User } from 'discord.js';
+import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
+import { number, label } from '../../core/presentation.js';
+export function profileView(
+  profile: { displayName: string; bio: string; cards: number; coins: bigint },
+  account: Pick<User, 'displayAvatarURL'>,
+  guild: Pick<Guild, 'name' | 'iconURL' | 'bannerURL'> | null,
+) {
+  const embed = new EmbedBuilder()
+    .setColor(TRICORD_RED)
+    .setAuthor({
+      name: profile.displayName.slice(0, 256),
+      iconURL: account.displayAvatarURL({ size: 128 }),
+    })
+    .setTitle('PERFIL')
+    .setDescription(
+      [
+        profile.bio
+          ? label(profile.bio).slice(0, 1000)
+          : 'Seu clube começa aqui.',
+        '',
+        `• **Cartas:** ${number(profile.cards)}`,
+        `• **Tricoins:** ${number(profile.coins)}`,
+        '',
+        '-# Veja suas cartas em /colecao e encontre novos jogadores em /loja.',
+      ].join('\n'),
+    );
+  const iconURL = guild?.iconURL({ size: 128 }) || undefined;
+  embed.setFooter({
+    text: guild?.name || TRICORD_NAME,
+    ...(iconURL ? { iconURL } : {}),
+  });
+  const banner = guild?.bannerURL({ size: 1024 });
+  if (banner) embed.setImage(banner);
+  return embed;
+}

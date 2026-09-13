@@ -2,12 +2,11 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder,
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
 import type { Command } from '../../core/types.js';
-import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
+import { profileView } from '../../modules/users/view.js';
 import { profile } from '../../modules/users/service.js';
 export default {
   data: new SlashCommandBuilder()
@@ -20,15 +19,10 @@ export default {
       interaction.user.id,
       interaction.user.username,
     );
-    const embed = new EmbedBuilder()
-      .setColor(TRICORD_RED)
-      .setTitle(`Perfil • ${TRICORD_NAME}`)
-      .setDescription(user.bio || 'Seu clube começa aqui!')
-      .addFields(
-        { name: 'Colecionador', value: user.displayName },
-        { name: 'Cartas', value: String(user.cards), inline: true },
-        { name: 'Tricoins', value: user.coins.toString(), inline: true },
-      );
+    const guild = interaction.guild
+      ? await interaction.guild.fetch().catch(() => interaction.guild)
+      : null;
+    const embed = profileView(user, interaction.user, guild);
     await interaction.editReply({
       embeds: [embed],
       components: [
@@ -36,7 +30,7 @@ export default {
           new ButtonBuilder()
             .setCustomId('edit-profile')
             .setLabel('Editar bio')
-            .setStyle(ButtonStyle.Primary),
+            .setStyle(ButtonStyle.Secondary),
         ),
       ],
       allowedMentions: { parse: [] },

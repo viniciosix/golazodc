@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import type { Command } from '../../core/types.js';
 import { TRICORD_RED } from '../../core/brand.js';
+import { rarities } from '../../modules/collection/view.js';
 import { PACKS } from '../../modules/economy/config.js';
 import { packOdds } from '../../modules/economy/rewards.js';
 export default {
@@ -24,24 +25,25 @@ export default {
       embeds: [
         new EmbedBuilder()
           .setColor(TRICORD_RED)
-          .setTitle('Loja • Tricoin')
+          .setTitle('LOJA')
           .setDescription(
-            'Escolha um pack para comprar e abrir. Podem vir repetidas. As chances são por carta e dependem das raridades disponíveis.\n\n' +
+            'Novos jogadores para a sua coleção.\n\n' +
               Object.values(PACKS)
                 .map(
                   (p) =>
-                    `${p.name}: **${p.cost} Tricoins** • ${p.count} cartas`,
+                    `**${p.name}**\n${p.count} cartas · **${p.cost} Tricoins**`,
                 )
-                .join('\n') +
-              '\n\n' +
+                .join('\n\n') +
+              '\n\n**Chances por carta**\n' +
               (cards.length
                 ? packOdds(cards)
                     .map(
                       ({ rarity, percent }) =>
-                        `${rarity}: ${percent.toFixed(2)}%`,
+                        `${rarities[rarity]} ${percent.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`,
                     )
                     .join(' • ')
-                : 'Catálogo vazio. Aguarde o administrador.'),
+                : 'Catálogo vazio. Aguarde o administrador.') +
+              '\n\n-# Podem vir repetidas. O botão confirma a compra e abre o pack.',
           ),
       ],
       components: [
@@ -50,7 +52,7 @@ export default {
             new ButtonBuilder()
               .setCustomId(`pack:${interaction.user.id}:${key}`)
               .setLabel(`Comprar ${p.name} • ${p.cost}`)
-              .setStyle(ButtonStyle.Danger)
+              .setStyle(ButtonStyle.Secondary)
               .setDisabled(!cards.length),
           ),
         ),

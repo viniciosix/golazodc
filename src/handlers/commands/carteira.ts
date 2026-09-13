@@ -1,6 +1,7 @@
 import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../core/types.js';
 import { TRICORD_RED } from '../../core/brand.js';
+import { number, label } from '../../core/presentation.js';
 import { ensureUser } from '../../modules/users/service.js';
 export default {
   data: new SlashCommandBuilder()
@@ -22,15 +23,24 @@ export default {
       embeds: [
         new EmbedBuilder()
           .setColor(TRICORD_RED)
-          .setTitle(`${user.coins} Tricoins`)
+          .setTitle('CARTEIRA')
           .setDescription(
-            entries
-              .map((e) => `${e.delta > 0 ? '+' : ''}${e.delta} • ${e.reason}`)
-              .join('\n') || 'Use /iniciar, /diario e /trabalhar para começar.',
-          )
-          .setFooter({
-            text: 'Moeda virtual do TRICORD, sem valor em dinheiro.',
-          }),
+            [
+              `• **Saldo disponível:** ${number(user.coins)} Tricoins`,
+              '',
+              '**Últimas movimentações**',
+              entries.length
+                ? entries
+                    .map(
+                      (e) =>
+                        `• **${e.delta > 0n ? '+' : ''}${number(e.delta)}** · ${label(e.reason)}`,
+                    )
+                    .join('\n')
+                : 'Nenhuma movimentação por enquanto.',
+              '',
+              '-# /diario e /trabalhar para ganhar Tricoins. /loja para abrir packs.',
+            ].join('\n'),
+          ),
       ],
     });
   },

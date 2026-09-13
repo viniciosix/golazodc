@@ -6,7 +6,8 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 import type { Rarity } from '@prisma/client';
-import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
+import { label } from '../../core/presentation.js';
+import { TRICORD_RED } from '../../core/brand.js';
 import type { collection } from './service.js';
 export const rarities: Record<Rarity, string> = {
   COMMON: 'Comum',
@@ -23,15 +24,15 @@ export function collectionView(
   const key = `${ownerId}:${rarity || 'ALL'}:${playerId || 'ALL'}`;
   const embed = new EmbedBuilder()
     .setColor(TRICORD_RED)
-    .setTitle(`Sua coleção • ${TRICORD_NAME}`)
+    .setTitle('COLEÇÃO')
     .setDescription(
       result.cards.length
         ? result.cards
             .map(
               (item) =>
-                `**${item.card.player.name}** · ${rarities[item.card.rarity]} · ${item.card.edition} ${item.locked ? '🔒' : ''}\nCópia: \`${item.id}\``,
+                `**${label(item.card.player.name)}** ${item.locked ? '🔒' : ''}\n${rarities[item.card.rarity]} · ${label(item.card.edition)}\n-# Cópia: \`${item.id}\``,
             )
-            .join('\n')
+            .join('\n\n')
         : 'Nenhuma carta encontrada. Use /iniciar para receber seu kit inicial.',
     )
     .setFooter({

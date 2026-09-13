@@ -2,6 +2,8 @@ import { AttachmentBuilder, EmbedBuilder, escapeMarkdown } from 'discord.js';
 import type { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
 import { TRICORD_RED } from '../../core/brand.js';
+import { rarities } from '../collection/view.js';
+import { label } from '../../core/presentation.js';
 import type { EconomyResult } from '../economy/transaction.js';
 export async function resultView(db: PrismaClient, result: EconomyResult) {
   const embed = new EmbedBuilder()
@@ -15,16 +17,15 @@ export async function resultView(db: PrismaClient, result: EconomyResult) {
       include: { artwork: true, player: true },
     });
     const ordered = result.cardIds.map((id) => cards.find((c) => c.id === id));
-    embed.addFields({
-      name: 'Cartas',
-      value: ordered
-        .map(
-          (c, i) =>
-            `${escapeMarkdown(c?.player.name || 'Carta')} • cópia: \`${result.copyIds?.[i] || c?.id}\``,
-        )
-        .join('\n')
-        .slice(0, 1024),
-    });
+    const names = ordered
+      .map(
+        (c, i) =>
+          `• **${escapeMarkdown(c?.player.name || 'Carta')}**\n-# Cópia: \`${result.copyIds?.[i] || c?.id}\``,
+      )
+      .join('\n');
+    embed.setDescription(
+      `${result.description.slice(0, 2500)}\n\n${names}`.slice(0, 4096),
+    );
     const layers = [];
     for (let i = 0; i < ordered.length; i++) {
       const art = ordered[i]?.artwork;
@@ -71,7 +72,7 @@ export async function cardView(db: PrismaClient, id: string) {
     .setColor(TRICORD_RED)
     .setTitle(card.player.name)
     .setDescription(
-      `${card.edition} • ${card.rarity} • ${card.player.position}\nCatálogo: \`${card.slug}\`\n${card.active ? 'Disponível nos packs' : 'Fora dos packs'}`,
+      `${label(card.edition)}\n\n• **Raridade:** ${rarities[card.rarity]}\n• **Posição:** ${label(card.player.position)}\n\n-# ${card.active ? 'Disponível nos packs' : 'Fora dos packs'} · Código: \`${card.slug}\``,
     );
   const files = card.artwork
     ? [
