@@ -2,6 +2,7 @@ import { logger } from '../../core/logger.js';
 import { z } from 'zod';
 export const leagues = {
   'bra.1': 'Brasileirão Série A',
+  'bra.2': 'Brasileirão Série B',
   'bra.copa_do_brasil': 'Copa do Brasil',
   'conmebol.libertadores': 'Libertadores',
   'conmebol.sudamericana': 'Sul-Americana',
@@ -11,6 +12,7 @@ export const leagues = {
 export type League = keyof typeof leagues;
 export const leagueSchema = z.enum([
   'bra.1',
+  'bra.2',
   'bra.copa_do_brasil',
   'conmebol.libertadores',
   'conmebol.sudamericana',
