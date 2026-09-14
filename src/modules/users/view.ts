@@ -8,21 +8,14 @@ export function profileView(
 ) {
   const embed = new EmbedBuilder()
     .setColor(TRICORD_RED)
-    .setAuthor({
-      name: profile.displayName.slice(0, 256),
-      iconURL: account.displayAvatarURL({ size: 128 }),
-    })
-    .setTitle('PERFIL')
+    .setTitle(profile.displayName.slice(0, 256))
+    .setThumbnail(account.displayAvatarURL({ size: 256 }))
     .setDescription(
       [
-        profile.bio
-          ? label(profile.bio).slice(0, 1000)
-          : 'Seu clube começa aqui.',
+        `**${label(profile.bio || 'Seu clube começa aqui!').slice(0, 1000)}**`,
         '',
-        `• **Cartas:** ${number(profile.cards)}`,
-        `• **Tricoins:** ${number(profile.coins)}`,
-        '',
-        '-# Veja suas cartas em /colecao e encontre novos jogadores em /loja.',
+        `**SALDO:** ${number(profile.coins)} TRICOINS`,
+        `**CARTAS:** ${number(profile.cards)}`,
       ].join('\n'),
     );
   const iconURL = guild?.iconURL({ size: 128 }) || undefined;

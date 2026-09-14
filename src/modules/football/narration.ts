@@ -70,9 +70,7 @@ export function narrationPanel(
     )
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(narration))
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `-# ${TRICORD_NAME} • ESPN • Atualização periódica; pode haver atraso`,
-      ),
+      new TextDisplayBuilder().setContent(`-# ${TRICORD_NAME} • ESPN`),
     );
 }
 export function narrationPayload(panel: ContainerBuilder) {

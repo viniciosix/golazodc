@@ -31,7 +31,7 @@ const formatTableRow = (row: {
   losses: number;
   difference: number;
 }) => {
-  const marker = isSaoPaulo(row.team) ? '▶' : ' ';
+  const marker = ' ';
   const team = (isSaoPaulo(row.team) ? row.team.toUpperCase() : row.team)
     .slice(0, 18)
     .padEnd(18);
@@ -56,7 +56,7 @@ export default {
 
     const saoPaulo = table.rows.find((row) => isSaoPaulo(row.team));
     const saoPauloSummary = saoPaulo
-      ? `🔴⚪⚫ **SÃO PAULO**\n**${saoPaulo.position}º • ${saoPaulo.points} pontos**\n${saoPaulo.played} jogos • ${saoPaulo.wins}V • ${saoPaulo.draws}E • ${saoPaulo.losses}D • SG ${signed(saoPaulo.difference)}`
+      ? `<:SPFC:1423098903250600017> **SÃO PAULO**\n**${saoPaulo.position}º - ${saoPaulo.points}pts**\n${saoPaulo.played} jogos - ${saoPaulo.wins}V - ${saoPaulo.draws}E - ${saoPaulo.losses}D - SG ${signed(saoPaulo.difference)}`
       : '';
 
     const legend = `${FOOTBALL_RESULT_EMOJIS.win} Vitória  •  ${FOOTBALL_RESULT_EMOJIS.draw} Empate  •  ${FOOTBALL_RESULT_EMOJIS.loss} Derrota`;
