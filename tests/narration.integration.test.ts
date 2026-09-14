@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it, vi } from 'vitest';
+import { MessageFlags } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import type { Context } from '../src/core/types.js';
 import type { Match } from '../src/modules/football/provider.js';
@@ -66,6 +67,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Narração persistente', () => 
     expect(actions).toEqual(['send']);
     await syncNarration(context, sub, { ...match, clock: "11'" }, lines);
     expect(actions).toEqual(['send', 'edit']);
+    expect(edit).toHaveBeenLastCalledWith(
+      'msg-1',
+      expect.objectContaining({
+        flags: MessageFlags.IsComponentsV2,
+        content: null,
+        embeds: [],
+        attachments: [],
+      }),
+    );
     expect(
       (
         await db.matchNarration.findUnique({

@@ -1,5 +1,14 @@
 import { createHash } from 'node:crypto';
-import { EmbedBuilder, escapeMarkdown } from 'discord.js';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ContainerBuilder,
+  EmbedBuilder,
+  MessageFlags,
+  TextDisplayBuilder,
+  escapeMarkdown,
+} from 'discord.js';
 import type { GoalSubscription } from '@prisma/client';
 import type { Context } from '../../core/types.js';
 import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
@@ -43,6 +52,68 @@ export function narrationEmbed(
     .setFooter({
       text: `${TRICORD_NAME} • ESPN • Atualização periódica; pode haver atraso`,
     });
+}
+export function narrationPanel(
+  match: Match,
+  lines: CommentaryLine[],
+  sinceSequence = -1,
+  unavailable = false,
+) {
+  const narration = narrationEmbed(
+    match,
+    lines,
+    sinceSequence,
+    unavailable,
+  ).toJSON();
+  const labels = [
+    match.home.name,
+    `${match.home.score} × ${match.away.score}`,
+    match.away.name,
+  ];
+  return new ContainerBuilder()
+    .setAccentColor(TRICORD_RED)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `### ${escapeMarkdown(match.home.name.slice(0, 100))} × ${escapeMarkdown(match.away.name.slice(0, 100))}`,
+      ),
+    )
+    .addActionRowComponents(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        ...labels.map((label, i) =>
+          new ButtonBuilder()
+            .setCustomId(`score-display:${i}`)
+            .setLabel(label.slice(0, 80) || 'Time')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+        ),
+      ),
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        (narration.description || '').slice(0, 3500),
+      ),
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `-# ${TRICORD_NAME} • ESPN • Atualização periódica; pode haver atraso`,
+      ),
+    );
+}
+export function narrationPayload(panel: ContainerBuilder) {
+  return {
+    flags: MessageFlags.IsComponentsV2 as const,
+    components: [panel],
+    allowedMentions: { parse: [] as never[] },
+  };
+}
+export function pausedNarrationPanel() {
+  return new ContainerBuilder()
+    .setAccentColor(TRICORD_RED)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `### Narração pausada\nUse /gols ligar para voltar a acompanhar.\n\n-# ${TRICORD_NAME}`,
+      ),
+    );
 }
 export async function syncNarration(
   context: Context,
@@ -97,16 +168,18 @@ export async function syncNarration(
       },
     });
   }
-  const embed = narrationEmbed(match, lines, state.sinceSequence, unavailable);
-  const payloadHash = hash(JSON.stringify(embed.toJSON()));
-  const payload = {
-    embeds: [embed],
-    allowedMentions: { parse: [] as never[] },
-  };
+  const panel = narrationPanel(match, lines, state.sinceSequence, unavailable);
+  const payloadHash = hash(JSON.stringify(panel.toJSON()));
+  const payload = narrationPayload(panel);
   if (state.messageId) {
     if (state.payloadHash === payloadHash) return;
     try {
-      await channel.messages.edit(state.messageId, payload);
+      await channel.messages.edit(state.messageId, {
+        ...payload,
+        content: null,
+        embeds: [],
+        attachments: [],
+      });
       await db.matchNarration.update({
         where: { id: state.id },
         data: { payloadHash },
@@ -144,14 +217,10 @@ export async function pauseNarrations({ db, client }: Context) {
     if (!channel?.isTextBased() || !('send' in channel)) continue;
     try {
       await channel.messages.edit(state.messageId!, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor(TRICORD_RED)
-            .setTitle('Narração pausada')
-            .setDescription('Use /gols ligar para voltar a acompanhar.')
-            .setFooter({ text: TRICORD_NAME }),
-        ],
-        allowedMentions: { parse: [] },
+        ...narrationPayload(pausedNarrationPanel()),
+        content: null,
+        embeds: [],
+        attachments: [],
       });
     } catch (error) {
       if (!missing(error)) throw error;
