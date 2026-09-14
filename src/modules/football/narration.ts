@@ -4,7 +4,6 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
-  EmbedBuilder,
   MessageFlags,
   TextDisplayBuilder,
   escapeMarkdown,
@@ -20,7 +19,7 @@ const missing = (error: unknown) =>
   error !== null &&
   'code' in error &&
   error.code === 10008;
-export function narrationEmbed(
+export function narrationText(
   match: Match,
   lines: CommentaryLine[],
   sinceSequence = -1,
@@ -35,36 +34,19 @@ export function narrationEmbed(
         `${line.clock ? `**${escapeMarkdown(line.clock)}** ` : ''}${escapeMarkdown(line.text.slice(0, 500))}`,
     )
     .join('\n\n');
-  return new EmbedBuilder()
-    .setColor(TRICORD_RED)
-    .setTitle(
-      `${match.home.name} ${match.home.score} × ${match.away.score} ${match.away.name}`.slice(
-        0,
-        256,
-      ),
-    )
-    .setDescription(
-      `**${match.state === 'post' ? 'PARTIDA ENCERRADA' : 'NARRAÇÃO AO VIVO'} • ${escapeMarkdown(match.clock.slice(0, 100))}**\n\n${plays || (unavailable ? 'Narração indisponível na fonte neste momento.' : 'Aguardando os próximos lances da fonte…')}`.slice(
-        0,
-        4096,
-      ),
-    )
-    .setFooter({
-      text: `${TRICORD_NAME} • ESPN • Atualização periódica; pode haver atraso`,
-    });
+  return `**${match.state === 'post' ? 'PARTIDA ENCERRADA' : 'NARRAÇÃO AO VIVO'} • ${escapeMarkdown(match.clock.slice(0, 100))}**\n\n${plays || (unavailable ? 'Narração indisponível na fonte neste momento.' : 'Aguardando os próximos lances da fonte…')}`.slice(
+    0,
+    3500,
+  );
 }
+
 export function narrationPanel(
   match: Match,
   lines: CommentaryLine[],
   sinceSequence = -1,
   unavailable = false,
 ) {
-  const narration = narrationEmbed(
-    match,
-    lines,
-    sinceSequence,
-    unavailable,
-  ).toJSON();
+  const narration = narrationText(match, lines, sinceSequence, unavailable);
   const labels = [
     match.home.name,
     `${match.home.score} × ${match.away.score}`,
@@ -73,9 +55,7 @@ export function narrationPanel(
   return new ContainerBuilder()
     .setAccentColor(TRICORD_RED)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `### ${escapeMarkdown(match.home.name.slice(0, 100))} × ${escapeMarkdown(match.away.name.slice(0, 100))}`,
-      ),
+      new TextDisplayBuilder().setContent('### Narração'),
     )
     .addActionRowComponents(
       new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -88,11 +68,7 @@ export function narrationPanel(
         ),
       ),
     )
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        (narration.description || '').slice(0, 3500),
-      ),
-    )
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(narration))
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
         `-# ${TRICORD_NAME} • ESPN • Atualização periódica; pode haver atraso`,

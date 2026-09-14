@@ -1,7 +1,6 @@
 import { expect, it } from 'vitest';
 import { parseCommentary } from '../src/modules/football/commentary.js';
-import { narrationEmbed } from '../src/modules/football/narration.js';
-import { TRICORD_RED } from '../src/core/brand.js';
+import { narrationText } from '../src/modules/football/narration.js';
 it('ordena, remove duplicatas e ignora eventos inválidos', () => {
   expect(
     parseCommentary({
@@ -18,7 +17,7 @@ it('ordena, remove duplicatas e ignora eventos inválidos', () => {
   ]);
   expect(parseCommentary({})).toEqual([]);
 });
-it('embed vermelho limita lances e respeita o reinício após gol', () => {
+it('narração limita lances e respeita o reinício após gol', () => {
   const match = {
     id: '1',
     date: '',
@@ -32,14 +31,9 @@ it('embed vermelho limita lances e respeita o reinício após gol', () => {
     clock: '',
     text: `Lance ${sequence}`,
   }));
-  const embed = narrationEmbed(match, lines, 8).toJSON();
-  expect(embed.color).toBe(TRICORD_RED);
-  expect(embed.description).toContain('Lance 9');
-  expect(embed.description).not.toContain('Lance 8');
-  expect(narrationEmbed(match, [], -1, true).toJSON().description).toContain(
-    'indisponível',
-  );
-  expect(
-    narrationEmbed({ ...match, state: 'post' }, []).toJSON().description,
-  ).toContain('ENCERRADA');
+  const text = narrationText(match, lines, 8);
+  expect(text).toContain('Lance 9');
+  expect(text).not.toContain('Lance 8');
+  expect(narrationText(match, [], -1, true)).toContain('indisponível');
+  expect(narrationText({ ...match, state: 'post' }, [])).toContain('ENCERRADA');
 });

@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { parseMatches } from '../src/modules/football/provider.js';
 import { parseCommentary } from '../src/modules/football/commentary.js';
-import { narrationEmbed } from '../src/modules/football/narration.js';
+import { narrationText } from '../src/modules/football/narration.js';
 function event(id = '100') {
   return {
     id,
@@ -76,7 +76,5 @@ it('mantém a descrição dentro do limite do Discord após escapar os lances', 
     clock: '45',
     text: '*'.repeat(500),
   }));
-  expect(
-    narrationEmbed(match, lines).toJSON().description!.length,
-  ).toBeLessThanOrEqual(4096);
+  expect(narrationText(match, lines).length).toBeLessThanOrEqual(4096);
 });
