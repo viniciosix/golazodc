@@ -1,6 +1,4 @@
-import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
 import {
-  EmbedBuilder,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -13,6 +11,12 @@ import {
   leagues,
   leagueSchema,
 } from '../../modules/football/provider.js';
+import {
+  newSimulation,
+  simulationView,
+  registerSimulation,
+} from '../../modules/football/simulator.js';
+import { resolveEventEmojis } from '../../modules/football/event-format.js';
 import { enableGoals } from '../../modules/football/goals.js';
 export default {
   data: new SlashCommandBuilder()
@@ -53,7 +57,7 @@ export default {
     .addSubcommand((s) =>
       s
         .setName('teste')
-        .setDescription('Envia uma mensagem claramente simulada neste canal'),
+        .setDescription('Abre um painel com botões para simular os lances'),
     ),
   async autocomplete(interaction) {
     try {
@@ -82,7 +86,7 @@ export default {
       await interaction.respond([]);
     }
   },
-  async execute(interaction, { db }) {
+  async execute(interaction, { db, client }) {
     if (
       !interaction.guildId ||
       !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)
@@ -128,20 +132,13 @@ export default {
         'Preciso de Ver canal, Enviar mensagens, Inserir links e Ler histórico neste canal.',
       );
     if (action === 'teste') {
-      await channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(TRICORD_RED)
-            .setTitle('🧪 TESTE SIMULADO')
-            .setDescription(
-              '⚽ Exemplo de alerta: São Paulo 1 × 0 Adversário.\nEste placar é fictício. Nenhum gol real foi detectado.',
-            )
-            .setFooter({ text: TRICORD_NAME }),
-        ],
-        allowedMentions: { parse: [] },
-      });
+      const state = newSimulation(interaction.user.id, interaction.guildId);
+      const message = await channel.send(
+        simulationView(state, resolveEventEmojis(client, interaction.guild)),
+      );
+      registerSimulation(message.id, state);
       await interaction.editReply(
-        'Mensagem de teste enviada. Para testar gols reais de outro time, use /jogos e /gols ligar.',
+        'Painel de teste criado! Use os botões para simular lances. Os dados são fictícios e os alertas reais continuam independentes.',
       );
       return;
     }

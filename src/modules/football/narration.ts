@@ -60,14 +60,23 @@ export function narrationPanel(
   sinceSequence = -1,
   unavailable = false,
   emojis: EventEmojis = EVENT_EMOJIS,
+  options: { simulation?: boolean } = {},
 ) {
-  const narration = narrationText(
+  let narration = narrationText(
     match,
     lines,
     sinceSequence,
     unavailable,
     emojis,
   );
+  if (options.simulation)
+    narration = narration
+      .replace('NARRAÇÃO AO VIVO', 'TESTE MANUAL')
+      .replace('PARTIDA ENCERRADA', 'TESTE ENCERRADO')
+      .replace(
+        'Aguardando os próximos lances da fonte…',
+        'Clique nos botões abaixo para simular um lance.',
+      );
   const labels = [
     match.home.name,
     `${match.home.score} × ${match.away.score}`,
@@ -75,7 +84,7 @@ export function narrationPanel(
   ];
   const panel = new ContainerBuilder().setAccentColor(TRICORD_RED);
   const heading = new TextDisplayBuilder().setContent(
-    `### Narração${match.competition ? `\n-# ${escapeMarkdown(match.competition.name.slice(0, 120))}` : ''}`,
+    `### ${options.simulation ? '🧪 TESTE SIMULADO' : 'Narração'}${match.competition ? `\n-# ${escapeMarkdown(match.competition.name.slice(0, 120))}` : ''}`,
   );
   if (match.competition?.logo)
     panel.addSectionComponents(
@@ -102,7 +111,11 @@ export function narrationPanel(
     )
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(narration))
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(`-# ${TRICORD_NAME} • ESPN`),
+      new TextDisplayBuilder().setContent(
+        options.simulation
+          ? `-# ${TRICORD_NAME} • Dados fictícios · só o autor controla · expira em 1 hora`
+          : `-# ${TRICORD_NAME} • ESPN`,
+      ),
     );
 }
 export function narrationPayload(panel: ContainerBuilder) {

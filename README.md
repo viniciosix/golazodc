@@ -157,7 +157,10 @@ Aplique a nova migração (`npm run db:deploy`), registre os comandos novamente 
 - `/gols ligar competicao:… time:…`: escolha outro time via autocomplete para testar um jogo real. Selecionar competição antes do time atualiza o catálogo.
 - `/gols desligar`: desativa neste canal e impede a entrega de alertas pendentes ainda não enviados. Uma mensagem já em envio pode chegar.
 - `/gols status`: mostra configuração persistida no PostgreSQL.
-- `/gols teste`: envia um exemplo **explicitamente simulado**, sem modificar o acompanhamento real.
+- `/gols teste`: abre um painel interativo **explicitamente simulado**, sem modificar o acompanhamento real.
+
+O painel simula São Paulo × LDU pela Sul-Americana. Os botões cinzas permitem marcar gols dos dois times, falta, escanteio, cartões, substituição, avançar 5 minutos, intervalo, segundo tempo, encerramento e reinício. Cada clique edita o mesmo painel, inclusive os gols deste teste, mantendo os últimos cinco lances. Usa o mesmo formatador e visual da narração real, sem consultar partidas na API nem alterar o banco ou os alertas reais. Só o autor com **Gerenciar servidor** pode controlar os botões. O teste expira após uma hora ou ao reiniciar o bot; nesse caso, abra outro `/gols teste`.
+
 - `/jogos`: lista jogos em andamento; se não houver, lista ontem/hoje/amanhã em UTC. Há seleção de competição.
 - `/brasileirao`: classificação da Série A obtida da página da ESPN usando regex.
 
