@@ -1,5 +1,6 @@
 import { EmbedBuilder } from 'discord.js';
 import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
+import { resolveEventEmojis } from './event-format.js';
 import { fetchCommentary } from './commentary.js';
 import { syncNarration, pauseNarrations } from './narration.js';
 import { createHash } from 'node:crypto';
@@ -49,11 +50,17 @@ export async function pollGoals(
       const channel = await client.channels.fetch(sub.channelId);
       if (!channel?.isTextBased() || !('send' in channel))
         throw new Error('Canal indisponível');
+      const emojis = resolveEventEmojis(
+        client,
+        'guild' in channel ? channel.guild : null,
+      );
+      const match = games.get(sub.league)?.find((m) => m.id === notice.eventId);
       await channel.send({
         embeds: [
           new EmbedBuilder()
             .setColor(TRICORD_RED)
-            .setDescription(notice.content)
+            .setDescription(notice.content.replace(/^⚽/, emojis.goal))
+            .setThumbnail(match?.competition?.logo || null)
             .setFooter({ text: TRICORD_NAME }),
         ],
         allowedMentions: { parse: [] },

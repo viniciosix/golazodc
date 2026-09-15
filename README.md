@@ -254,3 +254,15 @@ Use `/cartas-admin adicionar`, anexe o PNG e escolha um código único, como `ca
 Em produção/Docker/Railway, aplique `npm run db:deploy` e `node dist/scripts/import-cards.js` antes de `npm start`. O Docker já inclui as artes iniciais. Redis continua opcional. Use um processo sempre ativo; o Codespace suspenso não mantém o bot conectado. A plataforma pode ser trocada sem mudar a economia.
 
 As operações usam transações serializáveis, chave de idempotência e registro de movimentações para impedir cobranças duplicadas, saldo negativo e transferência simultânea da mesma cópia. Cartas recicladas permanecem no histórico, mas saem do inventário. A CI valida concorrência com PostgreSQL real. Execute `npm run check`; testes de banco exigem `TEST_DATABASE_URL` apontando para um banco descartável migrado e com `npm run cards:import` aplicado.
+
+### Narração compacta e logo da competição
+
+O painel mantém o placar nos botões cinzas e mostra os cinco lances mais recentes com frases curtas: gols, escanteios, faltas, cartões, substituições, impedimentos e finalizações. Descrições com o mesmo ID de lance são agrupadas; lances distintos no mesmo minuto continuam separados. Eventos não reconhecidos recebem um resumo truncado do texto original, sem inventar jogador ou time.
+
+Os emojis personalizados de gol, falta, escanteio e substituição ficam mapeados em `src/modules/football/event-format.ts`. O bot usa os emojis disponíveis no servidor atual ou no cache de emojis da aplicação; quando não consegue utilizá-los, mostra os equivalentes Unicode. Amarelo e vermelho usam 🟨 e 🟥. A formatação preserva o emoji personalizado fora do escape de Markdown.
+
+A logo é extraída de `leagues[].logos` no placar da ESPN. No painel Components V2, ela aparece como miniatura ao lado do cabeçalho; nos alertas tradicionais de gol, aparece como thumbnail da embed. Se não houver logo válida, o jogo continua sem imagem. Não há uma logo fixa de Série A: a imagem acompanha a competição selecionada.
+
+Para acompanhar São Paulo na **Sul-Americana**, use `/gols ligar competicao:Sul-Americana` e deixe `time` vazio. São Paulo é o padrão, inclusive se o catálogo de times estiver temporariamente indisponível. O comando configura a competição escolhida: ele não muda automaticamente da Série A para torneios continentais. Use `/jogos competicao:Sul-Americana` para conferir as partidas disponíveis. A cobertura dos lances depende da fonte; quando ela não disponibilizar comentários, o painel informa que aguarda os próximos lances e mantém o placar.
+
+A validação inclui um recorte de dados reais da ESPN de LDU Quito × São Paulo, em 24/08/2023 (`event=685743`), reproduzido como fixture offline. Isso testa o suporte à competição sem simular notificações em um canal real. A integração com PostgreSQL verifica a seleção da Sul-Americana, a miniatura e a edição da mesma mensagem.

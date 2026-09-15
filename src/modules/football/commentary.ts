@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { fetchText, leagueSchema, type League } from './provider.js';
 export interface CommentaryLine {
+  eventId?: string;
   sequence: number;
   clock: string;
   text: string;
@@ -11,6 +12,11 @@ const lineSchema = z.object({
     .transform(Number)
     .refine(Number.isSafeInteger),
   text: z.string().min(1),
+  play: z
+    .object({ id: z.string().optional() })
+    .passthrough()
+    .nullish()
+    .catch(undefined),
   time: z.object({ displayValue: z.string().nullish() }).nullish(),
 });
 export function parseCommentary(input: unknown): CommentaryLine[] {
@@ -22,6 +28,7 @@ export function parseCommentary(input: unknown): CommentaryLine[] {
     return parsed.success
       ? [
           {
+            ...(parsed.data.play?.id ? { eventId: parsed.data.play.id } : {}),
             sequence: parsed.data.sequence,
             clock: parsed.data.time?.displayValue || '',
             text: parsed.data.text,

@@ -1,0 +1,221 @@
+{
+  "leagues": [
+    {
+      "name": "CONMEBOL Sudamericana",
+      "slug": "conmebol.sudamericana",
+      "logos": [
+        {
+          "href": "https://a.espncdn.com/i/leaguelogos/soccer/500/1208.png",
+          "width": 500,
+          "height": 500,
+          "alt": "",
+          "rel": ["full", "default"],
+          "lastUpdated": "2019-05-08T16:07Z"
+        },
+        {
+          "href": "https://a.espncdn.com/i/leaguelogos/soccer/500-dark/1208.png",
+          "width": 500,
+          "height": 500,
+          "alt": "",
+          "rel": ["full", "dark"],
+          "lastUpdated": "2019-05-08T16:07Z"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "685743",
+      "date": "2023-08-24T22:00Z",
+      "status": {
+        "clock": 5400,
+        "displayClock": "90'+7'",
+        "period": 2,
+        "type": {
+          "id": "28",
+          "name": "STATUS_FULL_TIME",
+          "state": "post",
+          "completed": true,
+          "description": "Final da Partida",
+          "detail": "Finalizado",
+          "shortDetail": "F"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "2",
+              "team": {
+                "id": "4816",
+                "displayName": "Liga de Quito"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "1",
+              "team": {
+                "id": "2026",
+                "displayName": "São Paulo"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "commentary": [
+    {
+      "sequence": 0,
+      "time": {
+        "value": 0,
+        "displayValue": ""
+      },
+      "text": "Escalações são anunciadas e os jogadores já estão se aquecendo"
+    },
+    {
+      "sequence": 1,
+      "time": {
+        "value": 0,
+        "displayValue": ""
+      },
+      "text": "Início do primeiro tempo.",
+      "play": {
+        "id": "41180993"
+      }
+    },
+    {
+      "sequence": 2,
+      "time": {
+        "value": 44,
+        "displayValue": "1'"
+      },
+      "text": "Falta cometida por Gabriel Neves (São Paulo).",
+      "play": {
+        "id": "41180994"
+      }
+    },
+    {
+      "sequence": 3,
+      "time": {
+        "value": 44,
+        "displayValue": "1'"
+      },
+      "text": "Paolo Guerrero (LDU Quito) sofre uma falta no campo adversário.",
+      "play": {
+        "id": "41180994"
+      }
+    },
+    {
+      "sequence": 4,
+      "time": {
+        "value": 114,
+        "displayValue": "2'"
+      },
+      "text": "Gol!  LDU Quito 1, São Paulo 0. Jhojan Julio (LDU Quito) finalização com o pé direito do meio da área no lado direito do gol. Assistência de Renato Ibarra.",
+      "play": {
+        "id": "41180997"
+      }
+    },
+    {
+      "sequence": 5,
+      "time": {
+        "value": 392,
+        "displayValue": "7'"
+      },
+      "text": "Oportunidade perdida Sebastián González (LDU Quito),  finalização com o pé direito do lado esquerdo da área. Assistência de Jhojan Julio.",
+      "play": {
+        "id": "41181043"
+      }
+    },
+    {
+      "sequence": 6,
+      "time": {
+        "value": 395,
+        "displayValue": "7'"
+      },
+      "text": "Escanteio,  LDU Quito. Cedido por Beraldo.",
+      "play": {
+        "id": "41181008"
+      }
+    },
+    {
+      "sequence": 7,
+      "time": {
+        "value": 500,
+        "displayValue": "9'"
+      },
+      "text": "Finalização defendida  em direção ao centro do gol. Mauricio Martínez (LDU Quito) finalização com o pé direito de um ângulo dificil da direita. Assistência de Renato Ibarra.",
+      "play": {
+        "id": "41181073"
+      }
+    },
+    {
+      "sequence": 8,
+      "time": {
+        "value": 546,
+        "displayValue": "10'"
+      },
+      "text": "Escanteio,  LDU Quito. Cedido por Beraldo.",
+      "play": {
+        "id": "41181027"
+      }
+    },
+    {
+      "sequence": 9,
+      "time": {
+        "value": 659,
+        "displayValue": "11'"
+      },
+      "text": "Falta cometida por Rafinha (São Paulo).",
+      "play": {
+        "id": "41181173"
+      }
+    },
+    {
+      "sequence": 10,
+      "time": {
+        "value": 659,
+        "displayValue": "11'"
+      },
+      "text": "Jhojan Julio (LDU Quito) sofre uma falta no campo adversário.",
+      "play": {
+        "id": "41181173"
+      }
+    },
+    {
+      "sequence": 11,
+      "time": {
+        "value": 661,
+        "displayValue": "12'"
+      },
+      "text": "Rafinha (São Paulo) recebe cartão amarelo por uma entrada perigosa.",
+      "play": {
+        "id": "41181044"
+      }
+    },
+    {
+      "sequence": 43,
+      "time": {
+        "value": 2700,
+        "displayValue": "45'+4'"
+      },
+      "text": "Substituição  São Paulo, entra em campo Alan Franco substituindo Beraldo uma lesão.",
+      "play": {
+        "id": "41181257"
+      }
+    },
+    {
+      "sequence": 89,
+      "time": {
+        "value": 4591,
+        "displayValue": "77'"
+      },
+      "text": "Substituição  LDU Quito, entra em campo Alexander Alvarado substituindo Mauricio Martínez.",
+      "play": {
+        "id": "41181516"
+      }
+    }
+  ]
+}

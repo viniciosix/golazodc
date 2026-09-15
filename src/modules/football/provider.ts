@@ -46,7 +46,54 @@ const eventSchema = z.object({
     .array(z.object({ competitors: z.array(competitor).length(2) }))
     .min(1),
 });
+export interface Competition {
+  name: string;
+  logo?: string;
+}
+export function competitionInfo(
+  data: unknown,
+  league?: League,
+): Competition | undefined {
+  const parsed = z
+    .object({
+      leagues: z
+        .array(
+          z.object({
+            name: z.string().optional(),
+            slug: z.string().optional(),
+            logos: z.array(z.object({ href: z.string() })).optional(),
+          }),
+        )
+        .optional(),
+    })
+    .safeParse(data);
+  const entries = parsed.success ? parsed.data.leagues || [] : [];
+  const item = league
+    ? entries.find((x) => x.slug === league) ||
+      (entries.length === 1 ? entries[0] : undefined)
+    : entries[0];
+  const name = league ? leagues[league] : item?.name;
+  if (!name) return undefined;
+  const logo = item?.logos
+    ?.map((x) => x.href)
+    .find((href) => {
+      try {
+        const url = new URL(href);
+        return (
+          url.protocol === 'https:' &&
+          !url.username &&
+          !url.password &&
+          (url.hostname === 'espncdn.com' ||
+            url.hostname.endsWith('.espncdn.com'))
+        );
+      } catch {
+        return false;
+      }
+    });
+  return { name, ...(logo ? { logo } : {}) };
+}
 export interface Match {
+  competition?: Competition;
   id: string;
   date: string;
   state: 'pre' | 'in' | 'post';
@@ -91,7 +138,8 @@ export async function fetchText(
 }
 const api = (league: League, resource: string) =>
   `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueSchema.parse(league)}/${resource}`;
-export function parseMatches(data: unknown): Match[] {
+export function parseMatches(data: unknown, league?: League): Match[] {
+  const competition = competitionInfo(data, league);
   const parsed = z.object({ events: z.array(z.unknown()) }).parse(data);
   const matches = parsed.events.flatMap((raw) => {
     const result = eventSchema.safeParse(raw);
@@ -121,6 +169,7 @@ export function parseMatches(data: unknown): Match[] {
     });
     return [
       {
+        ...(competition ? { competition } : {}),
         id: event.id,
         date: event.date,
         state: event.status.type.state,
@@ -156,6 +205,7 @@ export async function fetchMatches(league: League): Promise<Match[]> {
         api(league, `scoreboard?dates=${date(-1)}-${date(1)}&limit=100`),
       ),
     ),
+    league,
   );
 }
 const teamCache = new Map<

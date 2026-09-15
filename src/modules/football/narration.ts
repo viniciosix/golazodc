@@ -6,12 +6,20 @@ import {
   ContainerBuilder,
   MessageFlags,
   TextDisplayBuilder,
+  SectionBuilder,
+  ThumbnailBuilder,
   escapeMarkdown,
 } from 'discord.js';
 import type { GoalSubscription } from '@prisma/client';
 import type { Context } from '../../core/types.js';
 import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
 import type { Match } from './provider.js';
+import {
+  formatCommentary,
+  resolveEventEmojis,
+  EVENT_EMOJIS,
+  type EventEmojis,
+} from './event-format.js';
 import type { CommentaryLine } from './commentary.js';
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');
 const missing = (error: unknown) =>
@@ -24,15 +32,21 @@ export function narrationText(
   lines: CommentaryLine[],
   sinceSequence = -1,
   unavailable = false,
+  emojis: EventEmojis = EVENT_EMOJIS,
 ) {
-  const recent = lines
-    .filter((line) => line.sequence > sinceSequence)
+  const eligible = lines.filter((line) => line.sequence > sinceSequence);
+  const recent = [
+    ...new Map(
+      eligible.map((line) => [
+        line.eventId || `sequence:${line.sequence}`,
+        line,
+      ]),
+    ).values(),
+  ]
+    .sort((a, b) => a.sequence - b.sequence)
     .slice(-5);
   const plays = recent
-    .map(
-      (line) =>
-        `${line.clock ? `**${escapeMarkdown(line.clock)}** ` : ''}${escapeMarkdown(line.text.slice(0, 500))}`,
-    )
+    .map((line) => formatCommentary(line, emojis))
     .join('\n\n');
   return `**${match.state === 'post' ? 'PARTIDA ENCERRADA' : 'NARRAÇÃO AO VIVO'} • ${escapeMarkdown(match.clock.slice(0, 100))}**\n\n${plays || (unavailable ? 'Narração indisponível na fonte neste momento.' : 'Aguardando os próximos lances da fonte…')}`.slice(
     0,
@@ -45,18 +59,36 @@ export function narrationPanel(
   lines: CommentaryLine[],
   sinceSequence = -1,
   unavailable = false,
+  emojis: EventEmojis = EVENT_EMOJIS,
 ) {
-  const narration = narrationText(match, lines, sinceSequence, unavailable);
+  const narration = narrationText(
+    match,
+    lines,
+    sinceSequence,
+    unavailable,
+    emojis,
+  );
   const labels = [
     match.home.name,
     `${match.home.score} × ${match.away.score}`,
     match.away.name,
   ];
-  return new ContainerBuilder()
-    .setAccentColor(TRICORD_RED)
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('### Narração'),
-    )
+  const panel = new ContainerBuilder().setAccentColor(TRICORD_RED);
+  const heading = new TextDisplayBuilder().setContent(
+    `### Narração${match.competition ? `\n-# ${escapeMarkdown(match.competition.name.slice(0, 120))}` : ''}`,
+  );
+  if (match.competition?.logo)
+    panel.addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(heading)
+        .setThumbnailAccessory(
+          new ThumbnailBuilder()
+            .setURL(match.competition.logo)
+            .setDescription(match.competition.name.slice(0, 100)),
+        ),
+    );
+  else panel.addTextDisplayComponents(heading);
+  return panel
     .addActionRowComponents(
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         ...labels.map((label, i) =>
@@ -142,7 +174,17 @@ export async function syncNarration(
       },
     });
   }
-  const panel = narrationPanel(match, lines, state.sinceSequence, unavailable);
+  const emojis = resolveEventEmojis(
+    client,
+    'guild' in channel ? channel.guild : null,
+  );
+  const panel = narrationPanel(
+    match,
+    lines,
+    state.sinceSequence,
+    unavailable,
+    emojis,
+  );
   const payloadHash = hash(JSON.stringify(panel.toJSON()));
   const payload = narrationPayload(panel);
   if (state.messageId) {

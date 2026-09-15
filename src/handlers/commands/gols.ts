@@ -149,13 +149,20 @@ export default {
       interaction.options.getString('competicao') || 'bra.1',
     );
     const teamId = interaction.options.getString('time') || '2026';
-    const teams = await fetchTeams(league);
-    const team = teams.find((t) => t.id === teamId);
+    const matches = await fetchMatches(league);
+    const side = matches
+      .flatMap((match) => [match.home, match.away])
+      .find((team) => team.id === teamId);
+    const team =
+      teamId === '2026'
+        ? { id: '2026', displayName: 'São Paulo' }
+        : side
+          ? { id: side.id, displayName: side.name }
+          : (await fetchTeams(league)).find((t) => t.id === teamId);
     if (!team)
       throw new UserError(
         'Escolha um time válido pelo autocomplete desta competição.',
       );
-    const matches = await fetchMatches(league);
     await enableGoals(
       db,
       {
