@@ -269,3 +269,20 @@ A logo é extraída de `leagues[].logos` no placar da ESPN. No painel Components
 Para acompanhar São Paulo na **Sul-Americana**, use `/gols ligar competicao:Sul-Americana` e deixe `time` vazio. São Paulo é o padrão, inclusive se o catálogo de times estiver temporariamente indisponível. O comando configura a competição escolhida: ele não muda automaticamente da Série A para torneios continentais. Use `/jogos competicao:Sul-Americana` para conferir as partidas disponíveis. A cobertura dos lances depende da fonte; quando ela não disponibilizar comentários, o painel informa que aguarda os próximos lances e mantém o placar.
 
 A validação inclui um recorte de dados reais da ESPN de LDU Quito × São Paulo, em 24/08/2023 (`event=685743`), reproduzido como fixture offline. Isso testa o suporte à competição sem simular notificações em um canal real. A integração com PostgreSQL verifica a seleção da Sul-Americana, a miniatura e a edição da mesma mensagem.
+
+### Resenha de gols do São Paulo
+
+- `/resenha ligar`: habilita as frases neste canal. Configure `/gols ligar` para o São Paulo no mesmo canal e na competição desejada (incluindo Sul-Americana).
+- `/resenha desligar`: desabilita e cancela respostas pendentes neste canal.
+- `/resenha teste lance: Gol São Paulo`: envia uma comemoração fictícia e, após 5 segundos, tenta responder a uma pessoa.
+- `/resenha teste lance: Gol adversário`: envia somente a reclamação fictícia.
+
+Os comandos exigem **Gerenciar servidor**. A resenha fica desligada até ser habilitada; a configuração persiste no PostgreSQL. Gols adversários também geram aviso de placar. As frases do TRICORD são usadas apenas quando o time acompanhado é o São Paulo, independentemente da competição. Correções de placar não disparam resenha.
+
+A resposta sorteia uma das últimas 50 mensagens do canal, enviada nos últimos 15 minutos por uma pessoa. Ignora bots, webhooks e mensagens de sistema. Não precisa ler o conteúdo das mensagens nem ativar Message Content Intent. Se não houver candidato, não envia resposta. Precisa de Ver canal, Enviar mensagens e Ler histórico. Se a mensagem escolhida for apagada, a falha é registrada sem enviar uma menção solta. Só a pessoa sorteada pode ser mencionada.
+
+Os testes funcionam mesmo com a resenha desligada e sem jogo na API; todas as mensagens levam `[TESTE]`. Escreva uma mensagem comum no chat antes de testar. O simulador `/gols teste` continua editando seu próprio painel; os testes das frases ficam em `/resenha teste`.
+
+As listas de frases ficam em `src/modules/football/banter.ts`. A resposta é agendada 5 segundos após o envio da comemoração, sujeita à latência do Discord. Desligar o acompanhamento cancela a resposta ao revalidar a configuração. Reiniciar o processo descarta respostas pendentes; elas não são reenviadas depois. Falhas na resenha são registradas sem repetir o alerta de gol já entregue.
+
+Após atualizar o código, execute `npm run db:deploy`, `npm run build` e `npm run commands:register` antes de iniciar o bot. A migração só adiciona a configuração de resenha e o tipo do aviso; preserva os dados existentes.

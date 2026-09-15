@@ -1,4 +1,5 @@
-import { EmbedBuilder } from 'discord.js';
+import { reactToNotice, cancelBanter } from './banter.js';
+import { EmbedBuilder, type GuildTextBasedChannel } from 'discord.js';
 import { TRICORD_NAME, TRICORD_RED } from '../../core/brand.js';
 import { resolveEventEmojis } from './event-format.js';
 import { fetchCommentary } from './commentary.js';
@@ -85,6 +86,19 @@ export async function pollGoals(
             data: { rotate: true },
           });
       });
+      try {
+        await reactToNotice(
+          { db, client } as Context,
+          channel as GuildTextBasedChannel,
+          notice,
+          sub.teamId,
+        );
+      } catch (err) {
+        logger.warn(
+          { err, noticeId: notice.id },
+          'Falha na comemoração; alerta já entregue',
+        );
+      }
     } catch (error) {
       logger.warn(
         { err: error, channelId: sub.channelId, noticeId: notice.id },
@@ -166,5 +180,6 @@ export function startGoalWorker(context: Context, seconds: number) {
     stopped = true;
     clearTimeout(timer);
     await running;
+    cancelBanter();
   };
 }

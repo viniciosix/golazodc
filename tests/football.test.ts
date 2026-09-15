@@ -91,7 +91,9 @@ describe('Futebol', () => {
   it('separa gol, gol adversário, repetição e correção', () => {
     expect(goalChange({ own: 0, other: 0 }, { own: 1, other: 0 })).toBe('goal');
     expect(goalChange({ own: 1, other: 0 }, { own: 1, other: 0 })).toBeNull();
-    expect(goalChange({ own: 1, other: 0 }, { own: 1, other: 1 })).toBeNull();
+    expect(goalChange({ own: 1, other: 0 }, { own: 1, other: 1 })).toBe(
+      'conceded',
+    );
     expect(goalChange({ own: 1, other: 0 }, { own: 0, other: 0 })).toBe(
       'correction',
     );

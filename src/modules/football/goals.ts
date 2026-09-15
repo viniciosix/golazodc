@@ -15,6 +15,7 @@ export function goalChange(
   if (current.own < previous.own || current.other < previous.other)
     return 'correction';
   if (current.own > previous.own) return 'goal';
+  if (current.other > previous.other) return 'conceded';
   return null;
 }
 export async function enableGoals(
@@ -106,12 +107,15 @@ export async function observeMatch(
     const title =
       kind === 'goal'
         ? `⚽ GOL DO ${sub.teamName.toUpperCase()}!`
-        : '↩️ Correção de placar / possível gol anulado';
+        : kind === 'conceded'
+          ? '⚽ GOL DO ADVERSÁRIO!'
+          : '↩️ Correção de placar / possível gol anulado';
     await tx.goalNotice.create({
       data: {
         subscriptionId: sub.id,
         revision: sub.revision,
         eventId: match.id,
+        kind,
         content: `${title}\n${match.home.name} ${match.home.score} × ${match.away.score} ${match.away.name}\n${match.clock} • Fonte: ESPN\nhttps://www.espn.com.br/futebol/placar/_/jogoId/${match.id}`,
       },
     });

@@ -103,6 +103,7 @@ model GoalSnapshot {
  @@unique([subscriptionId, eventId])
 }
 model GoalNotice {
+ kind String @default("legacy")
  eventId String?
  id String @id @default(cuid())
  subscriptionId String
@@ -186,4 +187,10 @@ model TradeOffer {
  createdAt DateTime @default(now())
  @@index([status, expiresAt])
  @@index([recipientId, status])
+}
+
+model GoalBanter {
+ channelId String @id
+ guildId String
+ enabled Boolean @default(true)
 }

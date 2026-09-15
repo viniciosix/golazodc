@@ -66,6 +66,7 @@ describe('Infraestrutura', () => {
       'perfil',
       'ping',
       'reciclar',
+      'resenha',
       'trabalhar',
       'troca',
     ]);
