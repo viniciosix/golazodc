@@ -199,14 +199,35 @@ export async function fetchMatches(league: League): Promise<Match[]> {
       .toISOString()
       .slice(0, 10)
       .replaceAll('-', '');
-  return parseMatches(
-    JSON.parse(
-      await fetchText(
-        api(league, `scoreboard?dates=${date(-1)}-${date(1)}&limit=100`),
+  const days = [-1, 0, 1].map(date);
+  const results = await Promise.allSettled(
+    days.map(async (day) =>
+      parseMatches(
+        JSON.parse(await fetchText(api(league, `scoreboard?dates=${day}`))),
+        league,
       ),
     ),
-    league,
   );
+  const matches = new Map<string, Match>();
+  let successes = 0;
+  for (const [index, result] of results.entries()) {
+    if (result.status === 'fulfilled') {
+      successes++;
+      for (const match of result.value) matches.set(match.id, match);
+    } else {
+      logger.warn(
+        { err: result.reason, league, date: days[index] },
+        'Falha na consulta diária dos jogos',
+      );
+    }
+  }
+  if (!successes) {
+    const failure = results.find((result) => result.status === 'rejected');
+    throw failure?.status === 'rejected'
+      ? failure.reason
+      : new Error('Consulta de jogos indisponível');
+  }
+  return [...matches.values()];
 }
 const teamCache = new Map<
   string,
