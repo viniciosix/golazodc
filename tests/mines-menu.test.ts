@@ -72,9 +72,11 @@ it('opens /mines without arguments and provides menus, preview and gray controls
   const { context, menu } = setup('plus');
   expect(command.data.toJSON().options).toEqual([]);
   const payload = await menuView(context.db, menu);
-  const rows = payload.components.map((r) => r.toJSON());
-  expect(rows).toHaveLength(4);
-  const bet = rows[0]!.components[0]!;
+  const rows = payload.components[0]!.toJSON().components.filter(
+    (c) => c.type === 1,
+  );
+  expect(rows).toHaveLength(6);
+  const bet = rows[2]!.components[0]!;
   expect(bet.type).toBe(3);
   if (bet.type === 3) {
     expect(bet.options).toHaveLength(25);
@@ -83,17 +85,17 @@ it('opens /mines without arguments and provides menus, preview and gray controls
   expect(JSON.stringify(payload)).toContain('Primeiro acerto');
   expect(
     rows
-      .slice(2)
+      .slice(4)
       .every((r) => r.components.every((b) => b.type === 2 && b.style === 2)),
   ).toBe(true);
   expect(startMines).not.toHaveBeenCalled();
 });
 it('changes configuration and updates the same message without charging', async () => {
   for (const [action, value, expected] of [
-    ['bet', '12', 'Aposta:** 12'],
-    ['bombs', '7', 'Bombas:** 7'],
-    ['double', undefined, 'Aposta:** 10'],
-    ['half', undefined, 'Aposta:** 2'],
+    ['bet', '12', 'Aposta: 12'],
+    ['bombs', '7', 'Bombas: 7'],
+    ['double', undefined, 'Aposta: 10'],
+    ['half', undefined, 'Aposta: 2'],
   ] as const) {
     const { cast, context, interaction } = setup(action, value);
     await handleMinesMenu(cast, context);
@@ -133,7 +135,10 @@ it('restricts controls to the owner and rejects invalid choices', async () => {
 it('disables unaffordable bets and opens a new round without charging', async () => {
   const { context, menu, cast, interaction } = setup('new');
   const payload = await menuView(context.db, { ...menu, bet: 25 });
-  expect(payload.components[3]!.toJSON().components[0]!.disabled).toBe(true);
+  expect(
+    payload.components[0]!.toJSON().components.filter((c) => c.type === 1)[5]!
+      .components[0]!.disabled,
+  ).toBe(true);
   await handleMinesMenu(cast, context);
   const data = JSON.stringify(interaction.editReply.mock.calls[0]);
   expect(data).not.toContain(menu.token);

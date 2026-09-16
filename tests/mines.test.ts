@@ -62,16 +62,18 @@ describe('Mines rules and board', () => {
     const board = minesView(game);
     const other = minesView({ ...game, bombs: [3, 9, 12] });
     expect(JSON.stringify(board)).toBe(JSON.stringify(other));
-    const rows = board.components.map((r) => r.toJSON());
-    expect(rows).toHaveLength(5);
-    expect(rows.flatMap((r) => r.components)).toHaveLength(17);
+    const rows = board.components[0]!.toJSON().components.filter(
+      (c) => c.type === 1,
+    );
+    expect(rows).toHaveLength(7);
+    expect(rows.flatMap((r) => r.components)).toHaveLength(24);
     expect(
       rows
         .flatMap((r) => r.components)
         .every((b) => b.type === 2 && b.style === 2),
     ).toBe(true);
     expect(JSON.stringify(board)).not.toContain('💣');
-    expect(board.embeds[0]!.toJSON().color).toBe(0xf5320c);
+    expect(board.components[0]!.toJSON().accent_color).toBe(0xf5320c);
     const ended = minesView({
       ...game,
       status: 'LOST',
@@ -80,10 +82,51 @@ describe('Mines rules and board', () => {
     });
     expect(JSON.stringify(ended)).toContain('💣');
     expect(
-      ended.components
-        .slice(0, 4)
-        .flatMap((r) => r.toJSON().components)
+      ended.components[0]!.toJSON()
+        .components.filter((c) => c.type === 1)
+        .slice(2, 6)
+        .flatMap((r) => r.components)
         .every((b) => b.disabled),
     ).toBe(true);
   });
+});
+
+it('reveals red bombs after withdrawal, keeps everything in one container and includes the avatar', () => {
+  const avatar = 'https://cdn.discordapp.com/embed/avatars/3.png';
+  const board = minesView(
+    {
+      ...game,
+      status: 'CASHED',
+      revealed: [1],
+      prize: 116n,
+      activeOwner: null,
+    },
+    avatar,
+  );
+  expect(board.embeds).toEqual([]);
+  expect(board.components).toHaveLength(1);
+  const panel = board.components[0]!.toJSON();
+  const json = JSON.stringify(panel);
+  expect(json).toContain(avatar);
+  expect(json).toContain('RETIRAR');
+  const buttons = panel.components
+    .filter((c) => c.type === 1)
+    .slice(2, 6)
+    .flatMap((r) => r.components);
+  expect(buttons.filter((b) => b.type === 2 && b.style === 4)).toHaveLength(3);
+  expect(buttons.every((b) => b.disabled)).toBe(true);
+  const count = (node: unknown): number => {
+    if (!node || typeof node !== 'object') return 0;
+    if (Array.isArray(node))
+      return node.reduce((sum, value) => sum + count(value), 0);
+    const obj = node as Record<string, unknown>;
+    return (
+      (typeof obj.type === 'number' ? 1 : 0) +
+      count(obj.components) +
+      count(obj.accessory)
+    );
+  };
+  expect(count(panel)).toBeLessThanOrEqual(40);
+  for (const text of panel.components.filter((c) => c.type === 10))
+    expect(text.content).not.toMatch(/[💎💣💥]/u);
 });

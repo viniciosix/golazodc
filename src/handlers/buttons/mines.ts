@@ -28,7 +28,9 @@ export default {
         Number(rev),
         action === 'cash' ? 'cash' : Number(action),
       );
-      await interaction.editReply(minesView(game));
+      await interaction.editReply(
+        minesView(game, interaction.user.displayAvatarURL()),
+      );
     } catch (err) {
       if (!(err instanceof UserError))
         logger.error({ err, gameId: id }, 'Falha no Mines');
@@ -41,7 +43,7 @@ export default {
         ).catch(() => null);
         if (current)
           await interaction
-            .editReply(minesView(current))
+            .editReply(minesView(current, interaction.user.displayAvatarURL()))
             .catch(() => undefined);
       }
       await interaction.followUp({

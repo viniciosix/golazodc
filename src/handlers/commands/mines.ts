@@ -12,7 +12,11 @@ export default {
       throw new UserError('Jogue Mines em um servidor.');
     await interaction.deferReply();
     await interaction.editReply(
-      await menuView(db, newMenu(interaction.user.id)),
+      await menuView(
+        db,
+        newMenu(interaction.user.id),
+        interaction.user.displayAvatarURL(),
+      ),
     );
   },
 } satisfies Command;

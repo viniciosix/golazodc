@@ -1,72 +1,73 @@
 import { menuId, newMenu } from './menu.js';
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-} from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import type { MinesGame } from '@prisma/client';
-import { TRICORD_RED } from '../../core/brand.js';
-import { MINES, multiplier, payout } from './rules.js';
+import { multiplier, payout } from './rules.js';
+import { infoRow, minesPanel, panelPayload } from './panel.js';
 const coins = (value: bigint) => value.toLocaleString('pt-BR');
-export function minesView(game: MinesGame) {
+export function minesView(game: MinesGame, avatar?: string) {
   const active = game.status === 'ACTIVE';
   const safe = game.revealed.filter((i) => !game.bombs.includes(i)).length;
   const amount = payout(game.bet, game.bombs.length, safe);
   const status = active
     ? 'Escolha uma casa ou retire seu prêmio.'
     : game.status === 'LOST'
-      ? '💥 Você encontrou uma bomba e perdeu a aposta.'
+      ? 'Você encontrou uma bomba e perdeu a aposta.'
       : game.status === 'CANCELLED'
-        ? 'Aposta devolvida. Partida cancelada antes da primeira jogada.'
+        ? 'Aposta devolvida. Nenhuma casa foi aberta.'
         : game.status === 'WON'
-          ? '💎 Todas as casas seguras! Prêmio creditado.'
+          ? 'Todas as casas seguras. Prêmio creditado.'
           : 'Prêmio retirado e creditado na carteira.';
-  const description = `${status}\n\n**Aposta:** ${coins(game.bet)} Tricoins • **Bombas:** ${game.bombs.length}\n**Casas seguras:** ${safe}/${MINES.cells - game.bombs.length}\n${active ? `**Retirada agora:** ${coins(amount)} Tricoins • ${multiplier(game.bombs.length, safe)}×${safe < MINES.cells - game.bombs.length ? `\n**Próximo acerto:** ${coins(payout(game.bet, game.bombs.length, safe + 1))} Tricoins • ${multiplier(game.bombs.length, safe + 1)}×\n**Chance do próximo acerto:** ${(((MINES.cells - game.bombs.length - safe) / (MINES.cells - safe)) * 100).toFixed(1)}%` : ''}` : `**Recebido:** ${coins(game.prize)} Tricoins\n**Resultado líquido:** ${coins(game.prize - game.bet)} Tricoins`}`;
-  const embed = new EmbedBuilder()
-    .setColor(TRICORD_RED)
-    .setTitle('💎 MINES • TRICORD')
-    .setDescription(description)
-    .setFooter({
-      text: 'Tricoins virtuais • margem de 5% + arredondamento • /mines e clique em Continuar para retomar',
-    });
-  const rows: ActionRowBuilder<ButtonBuilder>[] = [];
+  const panel = minesPanel(status, avatar).addActionRowComponents(
+    infoRow('round', [
+      `Aposta: ${coins(game.bet)}`,
+      `Bombas: ${game.bombs.length}`,
+      `Acertos: ${safe}/${16 - game.bombs.length}`,
+      `${multiplier(game.bombs.length, safe)}×`,
+    ]),
+  );
+  panel.addActionRowComponents(
+    infoRow(
+      'prize',
+      active
+        ? [
+            `Retirada: ${coins(amount)} TC`,
+            `Próximo: ${coins(payout(game.bet, game.bombs.length, safe + 1))} TC`,
+            `Chance: ${(((16 - game.bombs.length - safe) / (16 - safe)) * 100).toFixed(1)}%`,
+          ]
+        : [
+            `Recebido: ${coins(game.prize)} TC`,
+            `Resultado: ${coins(game.prize - game.bet)} TC`,
+            'PARTIDA ENCERRADA',
+          ],
+    ),
+  );
   for (let row = 0; row < 4; row++) {
-    rows.push(
+    panel.addActionRowComponents(
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         ...Array.from({ length: 4 }, (_, col) => {
           const cell = row * 4 + col;
           const visible = !active || game.revealed.includes(cell);
-          return new ButtonBuilder()
+          const bomb = visible && game.bombs.includes(cell);
+          const button = new ButtonBuilder()
             .setCustomId(`mines:${game.id}:${game.revision}:${cell}`)
-            .setStyle(ButtonStyle.Secondary)
-            .setLabel(
-              visible
-                ? game.bombs.includes(cell)
-                  ? '💣'
-                  : '💎'
-                : String(cell + 1),
-            )
+            .setStyle(bomb ? ButtonStyle.Danger : ButtonStyle.Secondary)
             .setDisabled(!active || game.revealed.includes(cell));
+          if (visible) button.setEmoji(bomb ? '💣' : '💎');
+          else button.setLabel(String(cell + 1));
+          return button;
         }),
       ),
     );
   }
-  rows.push(
-    new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`mines:${game.id}:${game.revision}:cash`)
-        .setStyle(ButtonStyle.Secondary)
-        .setLabel(
-          safe
-            ? `Retirar ${coins(amount)} Tricoins`
-            : 'Cancelar e devolver aposta',
-        )
-        .setDisabled(!active),
-    ),
+  const actions = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`mines:${game.id}:${game.revision}:cash`)
+      .setStyle(ButtonStyle.Secondary)
+      .setLabel(`RETIRAR ${coins(amount)} TRICOINS`)
+      .setDisabled(!active),
   );
   if (!active)
-    rows[4]!.addComponents(
+    actions.addComponents(
       new ButtonBuilder()
         .setCustomId(
           menuId(
@@ -75,11 +76,8 @@ export function minesView(game: MinesGame) {
           ),
         )
         .setStyle(ButtonStyle.Secondary)
-        .setLabel('Jogar novamente'),
+        .setLabel('JOGAR NOVAMENTE'),
     );
-  return {
-    embeds: [embed],
-    components: rows,
-    allowedMentions: { parse: [] as never[] },
-  };
+  panel.addActionRowComponents(actions);
+  return panelPayload(panel);
 }

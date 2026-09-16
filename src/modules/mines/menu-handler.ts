@@ -16,6 +16,9 @@ export async function handleMinesMenu(
   { db }: Context,
 ) {
   if (!interaction.guildId) throw new UserError('Abra /mines em um servidor.');
+  const avatar = interaction.user.displayAvatarURL?.();
+  const renderGame = (game: Awaited<ReturnType<typeof getGame>>) =>
+    minesView(game, avatar);
   const { menu, action } = parseMenu(interaction.customId, interaction.user.id);
   if (busy.has(interaction.message.id))
     throw new UserError('Aguarde a atualização do painel.');
@@ -25,13 +28,13 @@ export async function handleMinesMenu(
     const key = `mines-start:${menu.token}`;
     if (action === 'new') {
       await interaction.editReply(
-        await menuView(db, newMenu(menu.owner, menu.bet, menu.bombs)),
+        await menuView(db, newMenu(menu.owner, menu.bet, menu.bombs), avatar),
       );
       return;
     }
     if (action === 'resume') {
       await interaction.editReply(
-        minesView(await resumeMines(db, menu.owner, interaction.guildId)),
+        renderGame(await resumeMines(db, menu.owner, interaction.guildId)),
       );
       return;
     }
@@ -43,7 +46,7 @@ export async function handleMinesMenu(
       if (operation.actorId !== menu.owner || !result.gameId)
         throw new UserError('Painel inválido.');
       await interaction.editReply(
-        minesView(
+        renderGame(
           await getGame(db, menu.owner, result.gameId, interaction.guildId),
         ),
       );
@@ -51,7 +54,7 @@ export async function handleMinesMenu(
     }
     if (action === 'start') {
       await interaction.editReply(
-        minesView(
+        renderGame(
           await startMines(
             db,
             interaction.user,
@@ -79,7 +82,7 @@ export async function handleMinesMenu(
     }
     if (!validateSettings(menu.bet, menu.bombs))
       throw new UserError('Escolha uma aposta e quantidade de bombas válidas.');
-    await interaction.editReply(await menuView(db, menu));
+    await interaction.editReply(await menuView(db, menu, avatar));
   } catch (err) {
     if (!interaction.deferred) throw err;
     if (!(err instanceof UserError))
