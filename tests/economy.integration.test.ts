@@ -70,6 +70,10 @@ describe.skipIf(!url)('Economia com PostgreSQL real', () => {
     expect((await user(1)).coins).toBe(after);
   });
   it('cobra pack uma vez e desfaz compra sem saldo', async () => {
+    await db.user.update({
+      where: { discordId: actor(1).id },
+      data: { coins: 200n },
+    });
     const k = key();
     const first = await buyPack(db, actor(1), k, 'basico');
     expect(first.copyIds).toHaveLength(3);
