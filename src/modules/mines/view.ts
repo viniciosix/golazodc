@@ -1,3 +1,4 @@
+import { menuId, newMenu } from './menu.js';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -27,7 +28,7 @@ export function minesView(game: MinesGame) {
     .setTitle('💎 MINES • TRICORD')
     .setDescription(description)
     .setFooter({
-      text: 'Tricoins virtuais • margem de 5% + arredondamento • /mines continuar para retomar',
+      text: 'Tricoins virtuais • margem de 5% + arredondamento • /mines e clique em Continuar para retomar',
     });
   const rows: ActionRowBuilder<ButtonBuilder>[] = [];
   for (let row = 0; row < 4; row++) {
@@ -64,6 +65,18 @@ export function minesView(game: MinesGame) {
         .setDisabled(!active),
     ),
   );
+  if (!active)
+    rows[4]!.addComponents(
+      new ButtonBuilder()
+        .setCustomId(
+          menuId(
+            newMenu(game.ownerId, Number(game.bet), game.bombs.length),
+            'new',
+          ),
+        )
+        .setStyle(ButtonStyle.Secondary)
+        .setLabel('Jogar novamente'),
+    );
   return {
     embeds: [embed],
     components: rows,

@@ -26,7 +26,7 @@ export async function startMines(
       });
       if (active)
         throw new UserError(
-          'Você já tem um Mines em andamento. Use /mines continuar no servidor da partida.',
+          'Você já tem um Mines em andamento. Use /mines e clique em Continuar no servidor da partida.',
         );
       await balanceChange(tx, userId, -BigInt(bet), key, 'Aposta Mines');
       const game = await tx.minesGame.create({
@@ -68,7 +68,7 @@ export async function resumeMines(
   });
   if (!game)
     throw new UserError(
-      'Nenhuma partida encontrada neste servidor. Use /mines jogar.',
+      'Nenhuma partida encontrada neste servidor. Use /mines.',
     );
   return game;
 }
@@ -92,13 +92,12 @@ export async function moveMines(
     const game = await tx.minesGame.findFirst({
       where: { id, userId, ownerId: actor.id, guildId },
     });
-    if (!game)
-      throw new UserError('Abra sua própria partida com /mines jogar.');
+    if (!game) throw new UserError('Abra sua própria partida com /mines.');
     if (game.status !== 'ACTIVE')
-      throw new UserError('Esta partida já terminou. Use /mines jogar.');
+      throw new UserError('Esta partida já terminou. Use /mines.');
     if (game.revision !== revision)
       throw new UserError(
-        'O tabuleiro mudou. Use os botões atualizados ou /mines continuar.',
+        'O tabuleiro mudou. Use os botões atualizados ou /mines e clique em Continuar.',
       );
     const revealed = [...game.revealed];
     let status = 'ACTIVE';

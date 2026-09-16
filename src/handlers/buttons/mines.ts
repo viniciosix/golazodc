@@ -16,7 +16,7 @@ export default {
       !action ||
       (action !== 'cash' && !/^\d+$/.test(action))
     )
-      throw new UserError('Botão inválido. Use /mines continuar.');
+      throw new UserError('Botão inválido. Use /mines e clique em Continuar.');
     await interaction.deferUpdate();
     try {
       const game = await moveMines(
@@ -48,7 +48,7 @@ export default {
         content:
           err instanceof UserError
             ? err.message
-            : 'Não consegui atualizar o painel. Use /mines continuar para conferir a partida; não é preciso apostar novamente.',
+            : 'Não consegui atualizar o painel. Use /mines e clique em Continuar para conferir a partida; não é preciso apostar novamente.',
         flags: MessageFlags.Ephemeral,
       });
     }

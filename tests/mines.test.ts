@@ -81,6 +81,7 @@ describe('Mines rules and board', () => {
     expect(JSON.stringify(ended)).toContain('💣');
     expect(
       ended.components
+        .slice(0, 4)
         .flatMap((r) => r.toJSON().components)
         .every((b) => b.disabled),
     ).toBe(true);
