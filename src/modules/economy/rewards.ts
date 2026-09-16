@@ -103,7 +103,7 @@ export function reward(
         now.getTime() - user.dailyAt.getTime() < ECONOMY.dailyMs * 2
           ? Math.min(user.streak + 1, ECONOMY.streakCap)
           : 1;
-      amount = ECONOMY.dailyCoins + (streak - 1) * ECONOMY.streakBonus;
+      amount = randomInt(ECONOMY.dailyMin, ECONOMY.dailyMax + 1);
       detail = `Sequência: ${streak} dia(s).`;
       await tx.user.update({
         where: { id: userId },

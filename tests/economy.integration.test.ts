@@ -59,7 +59,15 @@ describe.skipIf(!url)('Economia com PostgreSQL real', () => {
       reward(db, actor(1), key(), 'daily'),
     ]);
     expect(daily.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-    expect((await user(1)).coins).toBe(200n);
+    const total = (await user(1)).coins;
+    expect(total >= 101n && total <= 105n).toBe(true);
+    const repeatedKey = key();
+    const next = new Date(Date.now() + 86400000 + 1000);
+    await reward(db, actor(1), repeatedKey, 'daily', next);
+    const after = (await user(1)).coins;
+    expect(after - total >= 1n && after - total <= 5n).toBe(true);
+    await reward(db, actor(1), repeatedKey, 'daily', next);
+    expect((await user(1)).coins).toBe(after);
   });
   it('cobra pack uma vez e desfaz compra sem saldo', async () => {
     const k = key();

@@ -5,6 +5,7 @@ export interface Actor {
   username: string;
 }
 export interface EconomyResult {
+  gameId?: string;
   title: string;
   description: string;
   cardIds?: string[];

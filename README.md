@@ -220,7 +220,7 @@ Se houver alterações locais, faça commit delas antes do pull. A configuraçã
 | Comando                                                 | Resultado                                                                      |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `/iniciar`                                              | Kit único com 3 cartas distintas disponíveis e 100 Tricoins                    |
-| `/diario`                                               | 100 Tricoins a cada 24 horas; bônus de 10 por dia consecutivo, até 160         |
+| `/diario`                                               | 1 a 5 Tricoins aleatórios a cada 24 horas, sem bônus monetário de sequência    |
 | `/trabalhar`                                            | 25 a 45 Tricoins a cada 4 horas                                                |
 | `/loja`                                                 | Pack Básico: 3 cartas por 150; Pack Grande: 5 por 250                          |
 | `/colecao`                                              | Inventário paginado, filtros, IDs das cópias e menu para ver as artes          |
@@ -288,3 +288,15 @@ Os testes funcionam mesmo com a resenha desligada e sem jogo na API; todas as me
 As listas de frases ficam em `src/modules/football/banter.ts`. A resposta é agendada 5 segundos após o envio da comemoração, sujeita à latência do Discord. Desligar o acompanhamento cancela a resposta ao revalidar a configuração. Reiniciar o processo descarta respostas pendentes; elas não são reenviadas depois. Falhas na resenha são registradas sem repetir o alerta de gol já entregue.
 
 Após atualizar o código, execute `npm run db:deploy`, `npm run build` e `npm run commands:register` antes de iniciar o bot. A migração só adiciona a configuração de resenha e o tipo do aviso; preserva os dados existentes.
+
+### Mines com Tricoins
+
+Use `/mines jogar aposta:5 bombas:3`. O tabuleiro 4×4 tem 16 casas e botões cinzas; escolha de 1 a 8 bombas e aposte de 1 a 25 Tricoins. Só o dono pode jogar. A aposta é debitada uma única vez ao criar a partida.
+
+Revele diamantes para aumentar a retirada. Encontrar uma bomba perde a aposta inteira. **Retirar** credita o valor total exibido, incluindo a aposta; revelar todas as casas seguras paga automaticamente. Antes do primeiro clique, **Cancelar e devolver aposta** devolve a aposta inteira. O painel mostra o prêmio atual, o próximo prêmio e a chance do próximo acerto.
+
+Os multiplicadores usam a probabilidade exata de sobreviver às casas já abertas, com retorno teórico de 95% antes do arredondamento para baixo em Tricoins inteiros. Fórmula após k acertos: `0,95 × produto((16-i)/(16-bombas-i), i=0..k-1)`. Esse retorno é uma média matemática, não uma promessa para uma partida. Tricoins são virtuais, sem saque ou conversão em dinheiro.
+
+As bombas são sorteadas com `node:crypto` antes da primeira jogada e nunca mudam. Ficam no banco e não aparecem nos botões ou mensagens até encerrar a rodada. A partida é persistente: `/mines continuar` recupera o tabuleiro no servidor original, inclusive após reinício do bot ou mensagem apagada, sem nova cobrança. Se a rodada já terminou, mostra o último resultado para conferir o pagamento. Há apenas uma partida ativa por pessoa. Painéis antigos rejeitam jogadas desatualizadas; use o painel mais recente. Não há expiração automática da aposta.
+
+Débitos, pagamentos, histórico de carteira e estado da partida são atualizados na mesma transação serializável. IDs de interação impedem reentregas de cobrar/pagar duas vezes. A migração `20260916010000_mines` cria apenas a tabela de partidas. Para atualizar: `npm run db:deploy && npm run build && npm run commands:register`, depois reinicie o bot. Os testes PostgreSQL verificam concorrência, autorização, perda, retirada, cancelamento e recuperação após reinício.

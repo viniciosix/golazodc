@@ -2,8 +2,8 @@ import type { Rarity } from '@prisma/client';
 export const ECONOMY = {
   starterCoins: 100,
   starterCards: 3,
-  dailyCoins: 100,
-  streakBonus: 10,
+  dailyMin: 1,
+  dailyMax: 5,
   streakCap: 7,
   dailyMs: 86400000,
   workMs: 14400000,

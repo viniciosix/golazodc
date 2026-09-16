@@ -63,6 +63,7 @@ describe('Infraestrutura', () => {
       'jogos',
       'loja',
       'mercado',
+      'mines',
       'perfil',
       'ping',
       'reciclar',
