@@ -53,7 +53,6 @@ export async function menuView(
     balance < BigInt(menu.bet)
       ? 'Saldo insuficiente. Reduza a aposta ou use /diario.'
       : 'Escolha sua aposta e clique em JOGAR.',
-    avatar,
   ).addActionRowComponents(
     infoRow('setup', [
       `Saldo: ${balance.toLocaleString('pt-BR')} TC`,
@@ -109,5 +108,5 @@ export async function menuView(
       button('resume', 'Continuar / último resultado'),
     ),
   );
-  return panelPayload(panel);
+  return panelPayload(panel, avatar);
 }

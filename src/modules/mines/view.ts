@@ -17,7 +17,7 @@ export function minesView(game: MinesGame, avatar?: string) {
         : game.status === 'WON'
           ? 'Todas as casas seguras. Prêmio creditado.'
           : 'Prêmio retirado e creditado na carteira.';
-  const panel = minesPanel(status, avatar).addActionRowComponents(
+  const panel = minesPanel(status).addActionRowComponents(
     infoRow('round', [
       `Aposta: ${coins(game.bet)}`,
       `Bombas: ${game.bombs.length}`,
@@ -79,5 +79,5 @@ export function minesView(game: MinesGame, avatar?: string) {
         .setLabel('JOGAR NOVAMENTE'),
     );
   panel.addActionRowComponents(actions);
-  return panelPayload(panel);
+  return panelPayload(panel, avatar);
 }
