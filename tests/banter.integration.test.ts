@@ -46,7 +46,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('persisted banter', () => {
     expect(notices).toHaveLength(1);
     expect(notices[0]!.kind).toBe('conceded');
     const send = vi.fn().mockResolvedValue({ id: 'sent' });
-    const channel = { id: channelId, send } as unknown as GuildTextBasedChannel;
+    const channel = {
+      id: channelId,
+      guildId: 'test',
+      isTextBased: () => true,
+      send,
+    } as unknown as GuildTextBasedChannel;
     await reactToNotice({ db } as Context, channel, notices[0]!, '2026');
     expect(send).not.toHaveBeenCalled();
     await db.goalBanter.create({ data: { channelId, guildId: 'test' } });

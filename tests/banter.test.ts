@@ -95,9 +95,14 @@ describe('resenha', () => {
   });
   it('ignores corrections, legacy notices, other teams and disabled channels', async () => {
     const { channel, send } = fixture();
-    const setting = vi.fn().mockResolvedValue(null);
+    const setting = vi.fn().mockResolvedValue([]);
     const context = {
-      db: { goalBanter: { findUnique: setting } },
+      db: {
+        goalBanter: { findMany: setting },
+        goalSubscription: {
+          findFirst: vi.fn().mockResolvedValue({ guildId: 'guild' }),
+        },
+      },
     } as unknown as Context;
     for (const kind of ['correction', 'legacy'])
       await reactToNotice(
@@ -157,4 +162,70 @@ describe('resenha', () => {
       command.execute(interaction, { db } as Context),
     ).rejects.toThrow('Gerenciar servidor');
   });
+});
+
+it('routes goals to the chat in the same guild, replies there and deduplicates multiple narrations', async () => {
+  vi.useFakeTimers();
+  const { channel, send, fetch } = fixture();
+  Object.assign(channel, { guildId: 'guild', isTextBased: () => true });
+  const source = {
+    id: 'narration',
+    guildId: 'guild',
+    send: vi.fn(),
+  } as unknown as GuildTextBasedChannel;
+  const settings = [{ channelId: 'chat', guildId: 'guild', enabled: true }];
+  const findMany = vi.fn().mockResolvedValue(settings);
+  const context = {
+    db: {
+      goalSubscription: {
+        findFirst: vi.fn().mockResolvedValue({ guildId: 'guild' }),
+      },
+      goalBanter: {
+        findMany,
+        findUnique: vi.fn().mockImplementation(async () => settings[0]),
+      },
+    },
+    client: { channels: { fetch: vi.fn().mockResolvedValue(channel) } },
+  } as unknown as Context;
+  const notice = {
+    id: 'route',
+    kind: 'goal',
+    subscriptionId: 'sub',
+    revision: 'rev',
+    eventId: 'match',
+    content: 'São Paulo 1 × 0 Boca',
+  };
+  await reactToNotice(context, source, notice, '2026');
+  await reactToNotice(
+    context,
+    source,
+    { ...notice, id: 'other-notice', subscriptionId: 'other-sub' },
+    '2026',
+  );
+  expect(findMany).toHaveBeenCalledWith({
+    where: { guildId: 'guild', enabled: true },
+  });
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(source.send).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(send).toHaveBeenCalledTimes(2);
+  await reactToNotice(
+    context,
+    source,
+    { ...notice, id: 'next', content: 'São Paulo 2 × 0 Boca' },
+    '2026',
+  );
+  settings[0]!.enabled = false;
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(send).toHaveBeenCalledTimes(3);
+  Object.assign(channel, { guildId: 'different-guild' });
+  settings[0]!.enabled = true;
+  await reactToNotice(
+    context,
+    source,
+    { ...notice, content: 'São Paulo 3 × 0 Boca' },
+    '2026',
+  );
+  expect(send).toHaveBeenCalledTimes(3);
 });

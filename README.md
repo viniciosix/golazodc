@@ -272,10 +272,12 @@ A validação inclui um recorte de dados reais da ESPN de LDU Quito × São Paul
 
 ### Resenha de gols do São Paulo
 
-- `/resenha ligar`: habilita as frases neste canal. Configure `/gols ligar` para o São Paulo no mesmo canal e na competição desejada (incluindo Sul-Americana).
+- `/resenha ligar`: habilita as frases neste canal. Configure `/gols ligar` para o São Paulo no canal de narração do mesmo servidor e na competição desejada (incluindo Sul-Americana).
 - `/resenha desligar`: desabilita e cancela respostas pendentes neste canal.
 - `/resenha teste lance: Gol São Paulo`: envia uma comemoração fictícia e, após 5 segundos, tenta responder a uma pessoa.
 - `/resenha teste lance: Gol adversário`: envia somente a reclamação fictícia.
+
+A narração e os avisos de gol ficam no canal do `/gols ligar`. As comemorações e respostas vão aos canais em que `/resenha ligar` foi ativado no mesmo servidor; a pessoa sorteada é escolhida no canal da resenha. Para mudar de canal, use `/resenha desligar` no antigo e `/resenha ligar` no novo.
 
 Os comandos exigem **Gerenciar servidor**. A resenha fica desligada até ser habilitada; a configuração persiste no PostgreSQL. Gols adversários também geram aviso de placar. As frases do TRICORD são usadas apenas quando o time acompanhado é o São Paulo, independentemente da competição. Correções de placar não disparam resenha.
 

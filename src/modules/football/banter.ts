@@ -103,13 +103,15 @@ export async function sendBanter(
 }
 
 export async function reactToNotice(
-  { db }: Context,
-  channel: GuildTextBasedChannel,
+  { db, client }: Context,
+  sourceChannel: GuildTextBasedChannel,
   notice: {
     id: string;
     kind: string;
     subscriptionId: string;
     revision: string;
+    eventId?: string | null;
+    content?: string;
   },
   teamId: string,
 ) {
@@ -118,19 +120,58 @@ export async function reactToNotice(
     (notice.kind !== 'goal' && notice.kind !== 'conceded')
   )
     return;
-  const stillEnabled = async () => {
-    const setting = await db.goalBanter.findUnique({
-      where: { channelId: channel.id },
-    });
-    if (!setting?.enabled) return false;
-    return !!(await db.goalSubscription.findFirst({
-      where: {
-        id: notice.subscriptionId,
-        revision: notice.revision,
-        enabled: true,
-      },
-    }));
+  const subscriptionWhere = {
+    id: notice.subscriptionId,
+    revision: notice.revision,
+    enabled: true,
   };
-  if (await stillEnabled())
-    await sendBanter(channel, notice.kind, notice.id, { stillEnabled });
+  const subscription = await db.goalSubscription.findFirst({
+    where: subscriptionWhere,
+  });
+  if (!subscription) return;
+  const settings = await db.goalBanter.findMany({
+    where: { guildId: subscription.guildId, enabled: true },
+  });
+  for (const setting of settings) {
+    try {
+      const channel =
+        setting.channelId === sourceChannel.id
+          ? sourceChannel
+          : await client.channels.fetch(setting.channelId);
+      if (
+        !channel ||
+        !channel.isTextBased() ||
+        !('send' in channel) ||
+        !('guildId' in channel) ||
+        channel.guildId !== subscription.guildId
+      )
+        continue;
+      const stillEnabled = async () => {
+        const current = await db.goalBanter.findUnique({
+          where: { channelId: setting.channelId },
+        });
+        return !!(
+          current?.enabled &&
+          current.guildId === subscription.guildId &&
+          (await db.goalSubscription.findFirst({ where: subscriptionWhere }))
+        );
+      };
+      if (!(await stillEnabled())) continue;
+      const eventKey =
+        notice.eventId && notice.content
+          ? `${notice.eventId}:${notice.kind}:${notice.content}`
+          : notice.id;
+      await sendBanter(
+        channel,
+        notice.kind,
+        `${setting.channelId}:${eventKey}`,
+        { stillEnabled },
+      );
+    } catch (err) {
+      logger.warn(
+        { err, channelId: setting.channelId },
+        'Falha ao enviar resenha no canal configurado',
+      );
+    }
+  }
 }

@@ -106,7 +106,7 @@ export default {
       update: { enabled: true },
     });
     await interaction.editReply(
-      'Resenha ligada neste chat! Configure também /gols ligar para o São Paulo aqui. Gol nosso: comemoração e resposta após 5 segundos. Gol adversário: só a reclamação.',
+      'Resenha ligada neste chat! A narração pode ficar em outro canal deste servidor: use /gols ligar para o São Paulo no canal de jogos. Gol nosso: comemoração e resposta após 5 segundos. Gol adversário: só a reclamação.',
     );
   },
 } satisfies Command;
