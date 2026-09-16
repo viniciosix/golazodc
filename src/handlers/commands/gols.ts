@@ -4,6 +4,7 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 import type { Command } from '../../core/types.js';
+import { logger } from '../../core/logger.js';
 import { UserError } from '../../core/errors.js';
 import {
   fetchMatches,
@@ -146,7 +147,19 @@ export default {
       interaction.options.getString('competicao') || 'bra.1',
     );
     const teamId = interaction.options.getString('time') || '2026';
-    const matches = await fetchMatches(league);
+    let sourceUnavailable = false;
+    const matches = await fetchMatches(league).catch((err: unknown) => {
+      if (teamId !== '2026')
+        throw new UserError(
+          'A fonte dos jogos não respondeu. Tente novamente em instantes. Para acompanhar o São Paulo, deixe o campo time vazio.',
+        );
+      sourceUnavailable = true;
+      logger.warn(
+        { err, league },
+        'Ativando São Paulo sem consulta inicial; monitor tentará novamente',
+      );
+      return [];
+    });
     const side = matches
       .flatMap((match) => [match.home, match.away])
       .find((team) => team.id === teamId);
@@ -172,7 +185,7 @@ export default {
       matches,
     );
     await interaction.editReply(
-      `Alertas ligados para ${team.displayName} em ${leagues[league]}, neste canal. A narração será atualizada em uma única mensagem. Só novos gols do time serão anunciados separadamente; correções de placar também serão informadas. Use /gols desligar para parar.`,
+      `Alertas ligados para ${team.displayName} em ${leagues[league]}, neste canal. A narração será atualizada em uma única mensagem. Novos gols dos dois times serão anunciados separadamente; correções de placar também serão informadas. Use /gols desligar para parar.${sourceUnavailable ? ' A ESPN não respondeu agora. O acompanhamento foi salvo e o monitor tentará novamente automaticamente; a narração aparecerá quando a fonte voltar. O primeiro placar recebido será a referência, sem anunciar gols antigos.' : ''}`,
     );
   },
 } satisfies Command;

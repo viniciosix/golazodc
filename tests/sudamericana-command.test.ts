@@ -50,3 +50,35 @@ it('liga São Paulo na Sul-Americana sem depender do catálogo de times', async 
     'conmebol.sudamericana',
   );
 });
+
+it('salva acompanhamento do São Paulo mesmo quando a consulta inicial falha', async () => {
+  vi.mocked(fetchMatches).mockRejectedValueOnce(new Error('timeout'));
+  const reply = vi.fn();
+  const db = {} as Context['db'];
+  const interaction = {
+    guildId: 'guild',
+    channelId: 'channel',
+    memberPermissions: { has: () => true },
+    appPermissions: { has: () => true },
+    channel: { isTextBased: () => true, isThread: () => false, send: vi.fn() },
+    deferReply: vi.fn(),
+    editReply: reply,
+    options: {
+      getSubcommand: () => 'ligar',
+      getString: (name: string) =>
+        name === 'competicao' ? 'conmebol.sudamericana' : null,
+    },
+  } as unknown as ChatInputCommandInteraction;
+  await command.execute(interaction, { db } as Context);
+  expect(enableGoals).toHaveBeenLastCalledWith(
+    db,
+    expect.objectContaining({
+      teamId: '2026',
+      league: 'conmebol.sudamericana',
+    }),
+    [],
+  );
+  expect(reply).toHaveBeenCalledWith(
+    expect.stringContaining('acompanhamento foi salvo'),
+  );
+});
