@@ -1,215 +1,282 @@
 generator client {
- provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
+
 datasource db {
- provider = "postgresql"
- url = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
 enum Rarity {
- COMMON
- RARE
- EPIC
- LEGENDARY
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
 }
+
 model User {
- id String @id @default(cuid())
- discordId String @unique
- displayName String
- bio String @default("")
- coins BigInt @default(0)
- createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt
- cards UserCard[]
- starterAt DateTime?
- dailyAt DateTime?
- workAt DateTime?
- streak Int @default(0)
- walletEntries WalletEntry[]
- minesGames MinesGame[]
+  id            String        @id @default(cuid())
+  discordId     String        @unique
+  displayName   String
+  bio           String        @default("")
+  coins         BigInt        @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  cards         UserCard[]
+  starterAt     DateTime?
+  dailyAt       DateTime?
+  workAt        DateTime?
+  streak        Int           @default(0)
+  walletEntries WalletEntry[]
+  minesGames    MinesGame[]
 }
+
 model Player {
- id String @id @default(cuid())
- externalId String? @unique
- name String
- country String
- club String?
- position String
- cards Card[]
+  id         String  @id @default(cuid())
+  externalId String? @unique
+  name       String
+  country    String
+  club       String?
+  position   String
+  cards      Card[]
 }
+
 model Season {
- id String @id @default(cuid())
- name String @unique
- startsAt DateTime
- endsAt DateTime?
- cards Card[]
+  id       String    @id @default(cuid())
+  name     String    @unique
+  startsAt DateTime
+  endsAt   DateTime?
+  cards    Card[]
 }
+
 model Card {
- id String @id @default(cuid())
- slug String @unique
- playerId String
- player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
- rarity Rarity @default(COMMON)
- rating Int
- edition String @default("base")
- seasonId String?
- season Season? @relation(fields: [seasonId], references: [id], onDelete: Restrict)
- imagePath String?
- createdAt DateTime @default(now())
- owners UserCard[]
- active Boolean @default(false)
- artwork CardArtwork?
- @@index([rarity, playerId])
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  playerId  String
+  player    Player       @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  rarity    Rarity       @default(COMMON)
+  rating    Int
+  edition   String       @default("base")
+  seasonId  String?
+  season    Season?      @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+  imagePath String?
+  createdAt DateTime     @default(now())
+  owners    UserCard[]
+  active    Boolean      @default(false)
+  artwork   CardArtwork?
+
+  @@index([rarity, playerId])
 }
+
 model UserCard {
- id String @id @default(cuid())
- userId String
- user User @relation(fields: [userId], references: [id], onDelete: Restrict)
- cardId String
- card Card @relation(fields: [cardId], references: [id], onDelete: Restrict)
- acquiredAt DateTime @default(now())
- source String @default("grant")
- locked Boolean @default(false)
- destroyedAt DateTime?
- listings MarketListing[]
- offeredTrades TradeOffer[] @relation("offeredCard")
- wantedTrades TradeOffer[] @relation("wantedCard")
- @@index([userId, acquiredAt, id])
- @@index([cardId])
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  cardId        String
+  card          Card            @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  acquiredAt    DateTime        @default(now())
+  source        String          @default("grant")
+  locked        Boolean         @default(false)
+  destroyedAt   DateTime?
+  listings      MarketListing[]
+  offeredTrades TradeOffer[]    @relation("offeredCard")
+  wantedTrades  TradeOffer[]    @relation("wantedCard")
+
+  @@index([userId, acquiredAt, id])
+  @@index([cardId])
 }
 
 model GoalSubscription {
- id String @id @default(cuid())
- guildId String
- channelId String @unique
- league String
- teamId String
- teamName String
- enabled Boolean @default(true)
- revision String
- updatedAt DateTime @updatedAt
- snapshots GoalSnapshot[]
- notices GoalNotice[]
- narration MatchNarration?
+  id        String          @id @default(cuid())
+  guildId   String
+  channelId String          @unique
+  league    String
+  teamId    String
+  teamName  String
+  enabled   Boolean         @default(true)
+  revision  String
+  updatedAt DateTime        @updatedAt
+  snapshots GoalSnapshot[]
+  notices   GoalNotice[]
+  narration MatchNarration?
 }
+
 model GoalSnapshot {
- id String @id @default(cuid())
- subscriptionId String
- subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
- eventId String
- revision String
- ownScore Int
- otherScore Int
- sequence Int @default(0)
- observedAt DateTime @default(now())
- @@unique([subscriptionId, eventId])
+  id             String           @id @default(cuid())
+  subscriptionId String
+  subscription   GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  eventId        String
+  revision       String
+  ownScore       Int
+  otherScore     Int
+  sequence       Int              @default(0)
+  observedAt     DateTime         @default(now())
+
+  @@unique([subscriptionId, eventId])
 }
+
 model GoalNotice {
- kind String @default("legacy")
- eventId String?
- id String @id @default(cuid())
- subscriptionId String
- subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
- revision String
- content String
- createdAt DateTime @default(now())
- sentAt DateTime?
- attempts Int @default(0)
- @@index([sentAt, createdAt])
+  kind           String           @default("legacy")
+  eventId        String?
+  id             String           @id @default(cuid())
+  subscriptionId String
+  subscription   GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  revision       String
+  content        String
+  createdAt      DateTime         @default(now())
+  sentAt         DateTime?
+  attempts       Int              @default(0)
+
+  @@index([sentAt, createdAt])
 }
 
 model MatchNarration {
- id String @id @default(cuid())
- subscriptionId String @unique
- subscription GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
- eventId String
- revision String
- messageId String?
- generation Int @default(0)
- rotate Boolean @default(false)
- sinceSequence Int @default(-1)
- payloadHash String @default("")
- updatedAt DateTime @updatedAt
+  id             String           @id @default(cuid())
+  subscriptionId String           @unique
+  subscription   GoalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  eventId        String
+  revision       String
+  messageId      String?
+  generation     Int              @default(0)
+  rotate         Boolean          @default(false)
+  sinceSequence  Int              @default(-1)
+  payloadHash    String           @default("")
+  updatedAt      DateTime         @updatedAt
 }
 
 model CardArtwork {
- cardId String @id
- card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
- png Bytes
- sha256 String
+  cardId String @id
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  png    Bytes
+  sha256 String
 }
+
 model EconomyOperation {
- id String @id
- actorId String
- action String
- result Json
- createdAt DateTime @default(now())
- entries WalletEntry[]
+  id        String        @id
+  actorId   String
+  action    String
+  result    Json
+  createdAt DateTime      @default(now())
+  entries   WalletEntry[]
 }
+
 model WalletEntry {
- id String @id @default(cuid())
- userId String
- user User @relation(fields: [userId], references: [id], onDelete: Restrict)
- operationId String
- operation EconomyOperation @relation(fields: [operationId], references: [id], onDelete: Restrict)
- delta BigInt
- balance BigInt
- reason String
- createdAt DateTime @default(now())
- @@index([userId, createdAt])
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  operationId String
+  operation   EconomyOperation @relation(fields: [operationId], references: [id], onDelete: Restrict)
+  delta       BigInt
+  balance     BigInt
+  reason      String
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, createdAt])
 }
+
 enum OfferStatus {
- OPEN
- COMPLETED
- CANCELLED
- EXPIRED
+  OPEN
+  COMPLETED
+  CANCELLED
+  EXPIRED
 }
+
 model MarketListing {
- id String @id @default(cuid())
- userCardId String
- userCard UserCard @relation(fields: [userCardId], references: [id], onDelete: Restrict)
- sellerId String
- buyerId String?
- price BigInt
- status OfferStatus @default(OPEN)
- createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt
- @@index([status, createdAt])
+  id         String      @id @default(cuid())
+  userCardId String
+  userCard   UserCard    @relation(fields: [userCardId], references: [id], onDelete: Restrict)
+  sellerId   String
+  buyerId    String?
+  price      BigInt
+  status     OfferStatus @default(OPEN)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([status, createdAt])
 }
+
 model TradeOffer {
- id String @id @default(cuid())
- senderId String
- recipientId String
- offeredId String
- offered UserCard @relation("offeredCard", fields: [offeredId], references: [id], onDelete: Restrict)
- wantedId String
- wanted UserCard @relation("wantedCard", fields: [wantedId], references: [id], onDelete: Restrict)
- status OfferStatus @default(OPEN)
- expiresAt DateTime
- createdAt DateTime @default(now())
- @@index([status, expiresAt])
- @@index([recipientId, status])
+  id          String      @id @default(cuid())
+  senderId    String
+  recipientId String
+  offeredId   String
+  offered     UserCard    @relation("offeredCard", fields: [offeredId], references: [id], onDelete: Restrict)
+  wantedId    String
+  wanted      UserCard    @relation("wantedCard", fields: [wantedId], references: [id], onDelete: Restrict)
+  status      OfferStatus @default(OPEN)
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+
+  @@index([status, expiresAt])
+  @@index([recipientId, status])
 }
 
 model GoalBanter {
- channelId String @id
- guildId String
- enabled Boolean @default(true)
+  channelId String  @id
+  guildId   String
+  enabled   Boolean @default(true)
 }
 
 model MinesGame {
- id String @id @default(cuid())
- userId String
- user User @relation(fields: [userId], references: [id], onDelete: Restrict)
- ownerId String
- activeOwner String? @unique
- guildId String
- bet BigInt
- bombs Int[]
- revealed Int[] @default([])
- status String @default("ACTIVE")
- prize BigInt @default(0)
- revision Int @default(0)
- createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt
- @@index([ownerId, guildId, status])
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  ownerId     String
+  activeOwner String?  @unique
+  guildId     String
+  bet         BigInt
+  bombs       Int[]
+  revealed    Int[]    @default([])
+  status      String   @default("ACTIVE")
+  prize       BigInt   @default(0)
+  revision    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId, guildId, status])
+}
+
+model ModerationConfig {
+  guildId       String  @id
+  muteRoleId    String?
+  logChannelId  String?
+  filterEnabled Boolean @default(true)
+}
+
+model ModerationWord {
+  id         String   @id @default(cuid())
+  guildId    String
+  value      String
+  normalized String
+  createdAt  DateTime @default(now())
+
+  @@unique([guildId, normalized])
+  @@index([guildId])
+}
+
+model ModerationWarning {
+  id          String   @id @default(cuid())
+  guildId     String
+  userId      String
+  moderatorId String
+  reason      String
+  createdAt   DateTime @default(now())
+
+  @@index([guildId, userId, createdAt])
+}
+
+model ModerationMute {
+  id          String    @id @default(cuid())
+  guildId     String
+  userId      String
+  moderatorId String
+  reason      String
+  roleIds     String[]
+  expiresAt   DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  endedAt     DateTime?
+
+  @@index([active, expiresAt])
+  @@index([guildId, userId, active])
 }

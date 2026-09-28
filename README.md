@@ -302,3 +302,49 @@ As bombas são sorteadas com `node:crypto` antes da primeira jogada e nunca muda
 Débitos, pagamentos, histórico de carteira e estado da partida são atualizados na mesma transação serializável. IDs de interação impedem reentregas de cobrar/pagar duas vezes. A migração `20260916010000_mines` cria apenas a tabela de partidas. Para atualizar: `npm run db:deploy && npm run build && npm run commands:register`, depois reinicie o bot. Os testes PostgreSQL verificam concorrência, autorização, perda, retirada, cancelamento e recuperação após reinício.
 
 O Mines usa um painel Components V2 com a arte personalizada em `assets/mines/logo.png` na thumbnail e avatar do jogador no rodapé. Tabuleiro, seletores e botões de informação ficam dentro do mesmo container. Textos não usam emojis; os ícones ficam apenas nas casas reveladas. Bombas reveladas ficam vermelhas. **RETIRAR** revela o tabuleiro completo e credita o prêmio na mesma operação de antes.
+
+### Moderação por prefixo
+
+O prefixo de moderação é `.`. Os comandos verificam as permissões nativas do Discord no momento da execução e funcionam apenas dentro de servidores.
+
+| Comando                                | Permissão necessária | Resultado                                                        |
+| -------------------------------------- | -------------------- | ---------------------------------------------------------------- |
+| `.mod` ou `.ajuda`                     | Gerenciar mensagens  | Mostra a ajuda de moderação                                      |
+| `.ban @membro [motivo]`                | Banir membros        | Bane o membro                                                    |
+| `.kick @membro [motivo]`               | Expulsar membros     | Expulsa o membro                                                 |
+| `.mute @membro [10m\|2h\|1d] [motivo]` | Moderar membros      | Oculta os canais e remove temporariamente os cargos restauráveis |
+| `.unmute @membro`                      | Moderar membros      | Remove o mute e restaura os cargos salvos                        |
+| `.avisar @membro <motivo>`             | Gerenciar mensagens  | Registra um aviso no PostgreSQL                                  |
+| `.avisos @membro`                      | Gerenciar mensagens  | Lista os dez avisos mais recentes                                |
+| `.limparavisos @membro`                | Gerenciar servidor   | Remove os avisos do membro                                       |
+| `.limpar <1-100>`                      | Gerenciar mensagens  | Apaga mensagens recentes                                         |
+| `.trancar` / `.destrancar`             | Gerenciar canais     | Controla o envio no canal atual                                  |
+| `.slowmode <0-21600>`                  | Gerenciar canais     | Ajusta o modo lento em segundos                                  |
+| `.palavra adicionar <texto>`           | Gerenciar servidor   | Adiciona palavra ou frase ao filtro                              |
+| `.palavra remover <texto>`             | Gerenciar servidor   | Remove uma regra do filtro                                       |
+| `.palavra listar`                      | Gerenciar servidor   | Lista as regras atuais                                           |
+| `.filtro ligar` / `.filtro desligar`   | Gerenciar servidor   | Liga ou pausa o filtro                                           |
+| `.modlog #canal` / `.modlog desligar`  | Gerenciar servidor   | Configura o canal de auditoria                                   |
+
+O filtro ignora maiúsculas, acentos e pontuação, mas respeita limites de palavras: uma regra `merda` não bloqueia `merdamente`. Pessoas com **Gerenciar mensagens** ignoram o filtro. A mensagem original é apagada e um webhook do TRICORD republica o texto com as palavras ou frases bloqueadas substituídas por asteriscos, usando o nome e o avatar do autor. Menções ficam totalmente desativadas nessa republicação: `@everyone`, `@here`, cargos e usuários aparecem apenas como texto e não geram notificações. Se configurado, o evento também é registrado no modlog.
+
+No primeiro `.mute`, o bot cria o cargo `TRICORD • Mutado` e nega visualização, mensagens, reações e voz em todos os canais atuais. Canais criados depois recebem a mesma configuração automaticamente. Os cargos comuns do membro são salvos no PostgreSQL, removidos durante o mute e restaurados no `.unmute` ou no término automático. O dono e membros com **Administrador** não podem ser mutados. Mutes temporários aceitam `s`, `m`, `h`, `d` e `w`, até 365 dias; sem duração, o mute é permanente.
+
+Ative no **Discord Developer Portal → Bot → Privileged Gateway Intents**:
+
+- **Server Members Intent**;
+- **Message Content Intent**.
+
+O cargo do bot deve ficar acima dos cargos que ele moderará. Conceda ao bot, conforme os comandos usados: **Gerenciar cargos**, **Gerenciar canais**, **Gerenciar mensagens**, **Gerenciar webhooks**, **Moderar membros**, **Banir membros**, **Expulsar membros**, **Ver canais**, **Enviar mensagens** e **Ler histórico de mensagens**. O filtro só apaga o original depois de localizar ou criar o webhook; sem **Gerenciar webhooks**, a mensagem permanece e a falha é registrada no console.
+
+Depois de atualizar o Codespace, aplique a nova tabela antes de iniciar:
+
+```bash
+git pull --ff-only
+npm ci
+npm run db:deploy
+npm run build
+npm run dev
+```
+
+Comandos de prefixo não precisam de `npm run commands:register`.

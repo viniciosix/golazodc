@@ -12,10 +12,17 @@ import { createDatabase } from './infrastructure/database.js';
 import { createCache, type Cache } from './infrastructure/cache.js';
 import { startGoalWorker } from './modules/football/worker.js';
 import { startEconomyWorker } from './modules/economy/worker.js';
+import { startModerationWorker } from './modules/moderation/service.js';
 let stopEconomyWorker: (() => Promise<void>) | undefined;
 let stopGoalWorker: (() => Promise<void>) | undefined;
+let stopModerationWorker: (() => Promise<void>) | undefined;
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.MessageContent,
+  ],
   allowedMentions: { parse: [] },
 });
 const db = createDatabase();
@@ -27,6 +34,7 @@ async function shutdown(code: number) {
   const deadline = setTimeout(() => process.exit(1), 10000).unref();
   await stopGoalWorker?.();
   await stopEconomyWorker?.();
+  await stopModerationWorker?.();
   client.destroy();
   await Promise.allSettled([db.$disconnect(), cache?.close()]);
   clearTimeout(deadline);
@@ -70,6 +78,7 @@ try {
   );
   client.once(Events.ClientReady, () => {
     stopGoalWorker = startGoalWorker(context, config.GOAL_POLL_SECONDS);
+    stopModerationWorker = startModerationWorker(context);
   });
   await client.login(config.DISCORD_TOKEN);
 } catch (err) {

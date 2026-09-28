@@ -76,7 +76,7 @@ describe('Infraestrutura', () => {
     expect(handlers.buttons.has('collection')).toBe(true);
     expect(handlers.selects.has('rarity')).toBe(true);
     expect(handlers.modals.has('profile-bio')).toBe(true);
-    expect(handlers.events).toHaveLength(2);
+    expect(handlers.events).toHaveLength(4);
     expect(handlers.commands.get('colecao')?.autocomplete).toBeTypeOf(
       'function',
     );
