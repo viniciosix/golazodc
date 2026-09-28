@@ -57,6 +57,7 @@ describe('Infraestrutura', () => {
       'cartas-admin',
       'carteira',
       'colecao',
+      'desbanir-todos',
       'diario',
       'gols',
       'iniciar',
