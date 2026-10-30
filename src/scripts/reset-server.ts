@@ -124,6 +124,29 @@ async function main(): Promise<void> {
       return channel;
     });
 
+    const comunicadoRoleIds = guild.roles.cache
+      .filter(
+        (role) =>
+          role.id === staffRole.id ||
+          role.permissions.has(PermissionFlagsBits.SendMessages) ||
+          role.permissions.has(PermissionFlagsBits.SendMessagesInThreads) ||
+          role.permissions.has(PermissionFlagsBits.CreatePublicThreads) ||
+          role.permissions.has(PermissionFlagsBits.CreatePrivateThreads),
+      )
+      .map((role) => role.id)
+      .filter((id) => id !== guild.id);
+    const comunicadoOverwriteIds = new Set([
+      guild.id,
+      ...comunicadoRoleIds,
+      directorMember.id,
+      botId,
+    ]);
+    if (comunicadoOverwriteIds.size > 100) {
+      throw new Error(
+        'O canal #comunicado precisaria de mais de 100 sobrescritas para restringir o envio. Nenhuma alteração foi feita.',
+      );
+    }
+
     const backup = {
       createdAt: new Date().toISOString(),
       guildId: guild.id,
@@ -243,6 +266,18 @@ async function main(): Promise<void> {
         ],
       },
     ];
+
+    for (const roleId of comunicadoRoleIds) {
+      comunicadoOverwrites.push({
+        id: roleId,
+        deny: [
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.SendMessagesInThreads,
+          PermissionFlagsBits.CreatePublicThreads,
+          PermissionFlagsBits.CreatePrivateThreads,
+        ],
+      });
+    }
 
     const comunicado = await guild.channels.create({
       name: 'comunicado',
