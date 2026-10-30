@@ -27,7 +27,8 @@
     "smoke": "node --import tsx src/scripts/smoke.ts",
     "card:preview": "node --import tsx src/scripts/card-preview.ts",
     "football:check": "node --import tsx src/scripts/football-check.ts",
-    "cards:import": "node --import tsx src/scripts/import-cards.ts"
+    "cards:import": "node --import tsx src/scripts/import-cards.ts",
+    "reset-server": "node --import tsx src/scripts/reset-server.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
